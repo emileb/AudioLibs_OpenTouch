@@ -255,7 +255,11 @@
 #define SIZEOF_SSIZE_T 4
 
 /* The size of `void*', as computed by sizeof. */
+#if defined(__aarch64__)
+#define SIZEOF_VOIDP 8
+#else
 #define SIZEOF_VOIDP 4
+#endif
 
 /* The size of `wchar_t', as computed by sizeof. */
 #define SIZEOF_WCHAR_T 4
