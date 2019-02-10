@@ -445,3 +445,20 @@ void alc_opensl_probe(enum DevProbe type)
             break;
     }
 }
+
+// Needed to try and clear Android Wake Lock
+void OpenSL_android_set_pause( ALCdevice *Device, int pause )
+{
+    SLPlayItf player;
+    SLresult result;
+    osl_data *data = Device->ExtraData;
+
+    result = SLObjectItf_GetInterface(data->bufferQueueObject, SL_IID_PLAY, &player);
+    if(SL_RESULT_SUCCESS == result)
+    {
+        if( pause )
+            SLPlayItf_SetPlayState(player, SL_PLAYSTATE_PAUSED);
+        else
+            SLPlayItf_SetPlayState(player, SL_PLAYSTATE_PLAYING);
+    }
+}
