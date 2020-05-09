@@ -1,3 +1,7 @@
+/*==============================================================================
+FMOD Example Framework
+Copyright (c), Firelight Technologies Pty, Ltd 2013-2020.
+==============================================================================*/
 #include <pthread.h>
 #include <assert.h>
 bool Common_SuspendState();

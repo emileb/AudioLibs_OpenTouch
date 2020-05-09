@@ -1,6 +1,6 @@
 /*==============================================================================
 Channel Groups Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to put channels into channel groups, so that you can
 affect a group of channels at a time instead of just one.
@@ -125,12 +125,12 @@ int FMOD_Main()
         {
             int channelsplaying = 0;
 
-            result = system->getChannelsPlaying(&channelsplaying);
+            result = system->getChannelsPlaying(&channelsplaying, NULL);
             ERRCHECK(result);
 
             Common_Draw("==================================================");
             Common_Draw("Channel Groups Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Group A : drumloop.wav, jaguar.wav, swish.wav");

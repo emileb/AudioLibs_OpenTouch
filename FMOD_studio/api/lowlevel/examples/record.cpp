@@ -1,49 +1,38 @@
 /*==============================================================================
 Record example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
-This example shows how to record continuously, and play back the same data as
-closely to the record cursor as possible without stuttering.
+This example shows how to record continuously and play back the same data while
+keeping a specified latency between the two. This is achieved by delaying the
+start of playback until the specified number of milliseconds has been recorded.
+At runtime the playback speed will be slightly altered to compensate for any
+drift in either play or record drivers.
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
 
 #define LATENCY_MS      (50) /* Some devices will require higher latency to avoid glitches */
+#define DRIFT_MS        (1)
 #define DEVICE_INDEX    (0)
 
 int FMOD_Main()
 {
-    FMOD::System   *system = 0;
-    FMOD::Sound    *sound = 0;
-    FMOD::Channel  *channel = 0;
-    FMOD_RESULT     result = FMOD_OK;
-    unsigned int    version = 0;
-    unsigned int    soundlength = 0;
-    bool            dspenabled = false;
-    void           *extradriverdata = 0;
-    unsigned int    recordpos = 0;
-    unsigned int    recorddelta = 0;
-    unsigned int    minrecorddelta = (unsigned int)-1;
-    unsigned int    desiredlatency = 0;
-    unsigned int    lastrecordpos = 0;
-    unsigned int    samplesrecorded = 0;
-    unsigned int    playpos = 0;
-    unsigned int    adjustedlatency = 0;
-    unsigned int    driftthreshold = 0;
-    float           smootheddelta = 0;
-    int             recordrate = 0;
-    int             recordchannels = 0;
-    int             recordnumdrivers = 0;
-    FMOD_CREATESOUNDEXINFO exinfo;
-    
-    Common_Init(&extradriverdata);
+    FMOD::Channel *channel = NULL;
+    unsigned int samplesRecorded = 0;
+    unsigned int samplesPlayed = 0;
+    bool dspEnabled = false;
+
+    void *extraDriverData = NULL;
+    Common_Init(&extraDriverData);
 
     /*
         Create a System object and initialize.
     */
-    result = FMOD::System_Create(&system);
+    FMOD::System *system = NULL;
+    FMOD_RESULT result = FMOD::System_Create(&system);
     ERRCHECK(result);
 
+    unsigned int version = 0;
     result = system->getVersion(&version);
     ERRCHECK(result);
 
@@ -52,13 +41,14 @@ int FMOD_Main()
         Common_Fatal("FMOD lib version %08x doesn't match header version %08x", version, FMOD_VERSION);
     }
 
-    result = system->init(100, FMOD_INIT_NORMAL, extradriverdata);
+    result = system->init(100, FMOD_INIT_NORMAL, extraDriverData);
     ERRCHECK(result);
 
-    result = system->getRecordNumDrivers(&recordnumdrivers);
+    int numDrivers = 0;
+    result = system->getRecordNumDrivers(NULL, &numDrivers);
     ERRCHECK(result);
 
-    if (recordnumdrivers <= 0)
+    if (numDrivers == 0)
     {
         Common_Fatal("No recording devices found/plugged in!  Aborting.");
     }
@@ -66,30 +56,35 @@ int FMOD_Main()
     /*
         Determine latency in samples.
     */
-    result = system->getRecordDriverInfo(DEVICE_INDEX, NULL, 0, 0, &recordrate, 0, &recordchannels);
+    int nativeRate = 0;
+    int nativeChannels = 0;
+    result = system->getRecordDriverInfo(DEVICE_INDEX, NULL, 0, NULL, &nativeRate, NULL, &nativeChannels, NULL);
     ERRCHECK(result);
 
-    desiredlatency = (recordrate * LATENCY_MS) / 1000;
-    adjustedlatency = desiredlatency;
-    driftthreshold = desiredlatency / 2;
+    unsigned int driftThreshold = (nativeRate * DRIFT_MS) / 1000;       /* The point where we start compensating for drift */
+    unsigned int desiredLatency = (nativeRate * LATENCY_MS) / 1000;     /* User specified latency */
+    unsigned int adjustedLatency = desiredLatency;                      /* User specified latency adjusted for driver update granularity */
+    int actualLatency = desiredLatency;                                 /* Latency measured once playback begins (smoothened for jitter) */
 
     /*
-        Create user sound to record into.
+        Create user sound to record into, then start recording.
     */
-    memset(&exinfo, 0, sizeof(FMOD_CREATESOUNDEXINFO));
+    FMOD_CREATESOUNDEXINFO exinfo = {0};
     exinfo.cbsize           = sizeof(FMOD_CREATESOUNDEXINFO);
-    exinfo.numchannels      = recordchannels;
+    exinfo.numchannels      = nativeChannels;
     exinfo.format           = FMOD_SOUND_FORMAT_PCM16;
-    exinfo.defaultfrequency = recordrate;
-    exinfo.length           = exinfo.defaultfrequency * sizeof(short) * exinfo.numchannels * 1; /* 1 second buffer, doesnt really matter how big this is, but not too small of course. */
+    exinfo.defaultfrequency = nativeRate;
+    exinfo.length           = nativeRate * sizeof(short) * nativeChannels; /* 1 second buffer, size here doesn't change latency */
     
+    FMOD::Sound *sound = NULL;
     result = system->createSound(0, FMOD_LOOP_NORMAL | FMOD_OPENUSER, &exinfo, &sound);
     ERRCHECK(result);
 
     result = system->recordStart(DEVICE_INDEX, sound, true);
     ERRCHECK(result);
 
-    result = sound->getLength(&soundlength, FMOD_TIMEUNIT_PCM);
+    unsigned int soundLength = 0;
+    result = sound->getLength(&soundLength, FMOD_TIMEUNIT_PCM);
     ERRCHECK(result);
 
     /*
@@ -99,14 +94,17 @@ int FMOD_Main()
     {
         Common_Update();
 
+        /*
+            Add a DSP effect -- just for fun
+        */
         if (Common_BtnPress(BTN_ACTION1))
         {
-            FMOD_REVERB_PROPERTIES propon = FMOD_PRESET_CONCERTHALL;
-            FMOD_REVERB_PROPERTIES propoff = FMOD_PRESET_OFF;
+            FMOD_REVERB_PROPERTIES propOn = FMOD_PRESET_CONCERTHALL;
+            FMOD_REVERB_PROPERTIES propOff = FMOD_PRESET_OFF;
 
-            dspenabled = !dspenabled;
+            dspEnabled = !dspEnabled;
 
-            result = system->setReverbProperties(0, dspenabled ? &propon : &propoff);
+            result = system->setReverbProperties(0, dspEnabled ? &propOn : &propOff);
             ERRCHECK(result);
         }
 
@@ -114,78 +112,104 @@ int FMOD_Main()
         ERRCHECK(result);
        
         /*
-            Delay playback until our desired latency is reached.
+            Determine how much has been recorded since we last checked
         */
-        bool isRecording = false;
-        system->isRecording(DEVICE_INDEX, &isRecording);
-        ERRCHECK(result);
-
-        if (isRecording)
+        unsigned int recordPos = 0;
+        result = system->getRecordPosition(DEVICE_INDEX, &recordPos);
+        if (result != FMOD_ERR_RECORD_DISCONNECTED)
         {
-            system->getRecordPosition(DEVICE_INDEX, &recordpos);
             ERRCHECK(result);
         }
 
-        recorddelta = (recordpos >= lastrecordpos) ? (recordpos - lastrecordpos) : (recordpos + soundlength - lastrecordpos);
-        lastrecordpos = recordpos;
+        static unsigned int lastRecordPos = 0;
+        unsigned int recordDelta = (recordPos >= lastRecordPos) ? (recordPos - lastRecordPos) : (recordPos + soundLength - lastRecordPos);
+        lastRecordPos = recordPos;
+        samplesRecorded += recordDelta;
+
+        static unsigned int minRecordDelta = (unsigned int)-1;
+        if (recordDelta && (recordDelta < minRecordDelta))
+        {
+            minRecordDelta = recordDelta; /* Smallest driver granularity seen so far */
+            adjustedLatency = (recordDelta <= desiredLatency) ? desiredLatency : recordDelta; /* Adjust our latency if driver granularity is high */
+        }
         
-        samplesrecorded += recorddelta;
-        if (samplesrecorded >= adjustedlatency && !channel)
+        /*
+            Delay playback until our desired latency is reached.
+        */
+        if (!channel && samplesRecorded >= adjustedLatency)
         {
             result = system->playSound(sound, 0, false, &channel);
             ERRCHECK(result);
         }
 
-        if (channel && recorddelta)
+        if (channel)
         {
             /*
-                If the record driver steps the position of the record cursor in larger increments than the user
-                defined latency value, then we should increase our latency value to match.
+                Stop playback if recording stops.
             */
-            if (recorddelta < minrecorddelta)
+            bool isRecording = false;
+            result = system->isRecording(DEVICE_INDEX, &isRecording);
+            if (result != FMOD_ERR_RECORD_DISCONNECTED)
             {
-                minrecorddelta = recorddelta;
-                adjustedlatency = (recorddelta <= desiredlatency) ? desiredlatency : recorddelta;
+                ERRCHECK(result);
             }
 
-            result = channel->getPosition(&playpos, FMOD_TIMEUNIT_PCM);
+            if (!isRecording)
+            {
+                result = channel->setPaused(true);
+                ERRCHECK(result);
+            }
+
+            /*
+                Determine how much has been played since we last checked.
+            */
+            unsigned int playPos = 0;
+            result = channel->getPosition(&playPos, FMOD_TIMEUNIT_PCM);
             ERRCHECK(result);
+
+            static unsigned int lastPlayPos = 0;
+            unsigned int playDelta = (playPos >= lastPlayPos) ? (playPos - lastPlayPos) : (playPos + soundLength - lastPlayPos);
+            lastPlayPos = playPos;
+            samplesPlayed += playDelta;
             
             /*
                 Compensate for any drift.
             */
-            int playrecorddelta = (recordpos >= playpos) ? (recordpos - playpos) : (recordpos + soundlength - playpos);
-            smootheddelta = (0.97f * smootheddelta) + (0.03f * (float)playrecorddelta);
+            int latency = samplesRecorded - samplesPlayed;
+            actualLatency = (0.97f * actualLatency) + (0.03f * latency);
 
-            if (smootheddelta < (adjustedlatency - driftthreshold)) /* If play cursor is catching up to record, slow playback down */
+            int playbackRate = nativeRate;
+            if (actualLatency < (int)(adjustedLatency - driftThreshold)) 
             {
-                channel->setFrequency((float)(recordrate - (recordrate / 50))); /* Decrease speed by 2% */
+                /* Play position is catching up to the record position, slow playback down by 2% */
+                playbackRate = nativeRate - (nativeRate / 50); 
             }
-            else if (smootheddelta > (adjustedlatency + driftthreshold)) /* If play cursor is falling too far behind record, speed playback up */
+            else if (actualLatency > (int)(adjustedLatency + driftThreshold))
             {
-                channel->setFrequency((float)(recordrate + (recordrate / 50))); /* Increase speed by 2% */
+                /* Play position is falling behind the record position, speed playback up by 2% */
+                playbackRate = nativeRate + (nativeRate / 50);
             }
-            else
-            {
-                channel->setFrequency((float)recordrate); /* Otherwise set to normal rate */
-            }
+
+            channel->setFrequency((float)playbackRate);
+            ERRCHECK(result);
         }
-       
+
         Common_Draw("==================================================");
         Common_Draw("Record Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Adjust LATENCY define to compensate for stuttering");
         Common_Draw("Current value is %dms", LATENCY_MS);
         Common_Draw("");
-        Common_Draw("Press %s to %s DSP effect", Common_BtnStr(BTN_ACTION1), dspenabled ? "disable" : "enable");
+        Common_Draw("Press %s to %s DSP effect", Common_BtnStr(BTN_ACTION1), dspEnabled ? "disable" : "enable");
         Common_Draw("Press %s to quit", Common_BtnStr(BTN_QUIT));
         Common_Draw("");
-        Common_Draw("Adjusted playback latency: %4d (%dms)", adjustedlatency, adjustedlatency * 1000 / recordrate);
-        Common_Draw("Current playback latency: %4d (%dms)", (int)smootheddelta, (int)smootheddelta * 1000 / recordrate);
-        Common_Draw("Record position: %5d", recordpos);
-        Common_Draw("Play Position:   %5d", playpos);
+        Common_Draw("Adjusted latency: %4d (%dms)", adjustedLatency, adjustedLatency * 1000 / nativeRate);
+        Common_Draw("Actual latency:   %4d (%dms)", actualLatency, actualLatency * 1000 / nativeRate);
+        Common_Draw("");
+        Common_Draw("Recorded: %5d (%ds)", samplesRecorded, samplesRecorded / nativeRate);
+        Common_Draw("Played:   %5d (%ds)", samplesPlayed, samplesPlayed / nativeRate);
 
         Common_Sleep(10);
     } while (!Common_BtnPress(BTN_QUIT));

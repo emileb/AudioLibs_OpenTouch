@@ -1,6 +1,6 @@
 /*==============================================================================
 Event 3D Example
-Copyright (c), Firelight Technologies Pty, Ltd 2012-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2012-2020.
 
 This example demonstrates how to position events in 3D for spatialization.
 ==============================================================================*/
@@ -30,7 +30,7 @@ int FMOD_Main()
     ERRCHECK( system->getLowLevelSystem(&lowLevelSystem) );
     ERRCHECK( lowLevelSystem->setSoftwareFormat(0, FMOD_SPEAKERMODE_5POINT1, 0) );
 
-    ERRCHECK( system->initialize(32, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
+    ERRCHECK( system->initialize(1024, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
 
     FMOD::Studio::Bank* masterBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &masterBank) );
@@ -42,23 +42,19 @@ int FMOD_Main()
     ERRCHECK( system->loadBankFile(Common_MediaPath("Vehicles.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &vehiclesBank) );
     
     FMOD::Studio::EventDescription* eventDescription = NULL;
-    ERRCHECK( system->getEvent("event:/Vehicles/Basic Engine", &eventDescription) );
+    ERRCHECK( system->getEvent("event:/Vehicles/Ride-on Mower", &eventDescription) );
 
     FMOD::Studio::EventInstance* eventInstance = NULL;
     ERRCHECK( eventDescription->createInstance(&eventInstance) );
 
-    FMOD::Studio::ParameterInstance* rpm = NULL;
-    ERRCHECK( eventInstance->getParameter("RPM", &rpm) );
-
-    ERRCHECK( rpm->setValue(650) );
-
+    ERRCHECK( eventInstance->setParameterValue("RPM", 650.0f) );
     ERRCHECK( eventInstance->start() );
 
     // Position the listener at the origin
     FMOD_3D_ATTRIBUTES attributes = { { 0 } };
     attributes.forward.z = 1.0f;
     attributes.up.y = 1.0f;
-    ERRCHECK( system->setListenerAttributes(&attributes) );
+    ERRCHECK( system->setListenerAttributes(0, &attributes) );
 
     // Position the event 2 units in front of the listener
     attributes.position.z = 2.0f;
@@ -70,25 +66,25 @@ int FMOD_Main()
     {
         Common_Update();
         
-        if (Common_BtnPress(BTN_LEFT))
+        if (Common_BtnDown(BTN_LEFT))
         {
             attributes.position.x -= 1.0f;
             ERRCHECK( eventInstance->set3DAttributes(&attributes) );
         }
         
-        if (Common_BtnPress(BTN_RIGHT))
+        if (Common_BtnDown(BTN_RIGHT))
         {
             attributes.position.x += 1.0f;
             ERRCHECK( eventInstance->set3DAttributes(&attributes) );
         }
         
-        if (Common_BtnPress(BTN_UP))
+        if (Common_BtnDown(BTN_UP))
         {
             attributes.position.z += 1.0f;
             ERRCHECK( eventInstance->set3DAttributes(&attributes) );
         }
         
-        if (Common_BtnPress(BTN_DOWN))
+        if (Common_BtnDown(BTN_DOWN))
         {
             attributes.position.z -= 1.0f;
             ERRCHECK( eventInstance->set3DAttributes(&attributes) );
@@ -99,7 +95,7 @@ int FMOD_Main()
         updateScreenPosition(attributes.position);
         Common_Draw("==================================================");
         Common_Draw("Event 3D Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2015-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2012-2020.");
         Common_Draw("==================================================");
         Common_Draw(screenBuffer);
         Common_Draw("Use the arrow keys (%s, %s, %s, %s) to control the event position", 

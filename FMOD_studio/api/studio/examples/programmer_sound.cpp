@@ -1,6 +1,6 @@
 /*==============================================================================
 Programmer Sound Example
-Copyright (c), Firelight Technologies Pty, Ltd 2012-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2012-2020.
 
 This example demonstrates how to implement the programmer sound callback to
 play an event that has a programmer specified sound.
@@ -14,8 +14,9 @@ Studio::EventInstance::setCallback
 
 struct ProgrammerSoundContext
 {
-    FMOD::System* system;
-    const char* soundName;
+    FMOD::System* lowLevelSystem;
+    FMOD::Studio::System* system;
+    const char* dialogueString;
 };
 
 FMOD_RESULT F_CALLBACK programmerSoundCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE* event, void *parameters);
@@ -33,7 +34,7 @@ int FMOD_Main()
     ERRCHECK( system->getLowLevelSystem(&lowLevelSystem) );
     ERRCHECK( lowLevelSystem->setSoftwareFormat(0, FMOD_SPEAKERMODE_5POINT1, 0) );
 
-    ERRCHECK( system->initialize(32, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
+    ERRCHECK( system->initialize(1024, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
 
     FMOD::Studio::Bank* masterBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &masterBank) );
@@ -41,21 +42,34 @@ int FMOD_Main()
     FMOD::Studio::Bank* stringsBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.strings.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &stringsBank) );
 
-    FMOD::Studio::Bank* ambienceBank = NULL;
-    ERRCHECK( system->loadBankFile(Common_MediaPath("Character.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &ambienceBank) );
+    FMOD::Studio::Bank* sfxBank = NULL;
+    ERRCHECK( system->loadBankFile(Common_MediaPath("SFX.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &sfxBank) );
+
+    // Available banks
+    unsigned int bankIndex = 0;
+    static const char* const banks[] = { "Dialogue_EN.bank", "Dialogue_JP.bank", "Dialogue_CN.bank" };
+
+    FMOD::Studio::Bank* localizedBank = NULL;
+    ERRCHECK( system->loadBankFile(Common_MediaPath(banks[bankIndex]), FMOD_STUDIO_LOAD_BANK_NORMAL, &localizedBank) );
 
     FMOD::Studio::EventDescription* eventDescription = NULL;
-    ERRCHECK( system->getEvent("event:/Character/Radio/Command", &eventDescription) );
+    ERRCHECK( system->getEvent("event:/Character/Dialogue", &eventDescription) );
 
     FMOD::Studio::EventInstance* eventInstance = NULL;
     ERRCHECK( eventDescription->createInstance(&eventInstance) );
-    
+
+    // Dialogue keys available
+    // These keys are shared amongst all audio tables
+    unsigned int dialogueIndex = 0;
+    static const char* const dialogue[] = {"welcome", "main menu", "goodbye"};
+
     ProgrammerSoundContext programmerSoundContext;
-    ERRCHECK( system->getLowLevelSystem(&programmerSoundContext.system) );
+    programmerSoundContext.system = system;
+    programmerSoundContext.lowLevelSystem = lowLevelSystem;
+    programmerSoundContext.dialogueString = dialogue[dialogueIndex];
 
     ERRCHECK( eventInstance->setUserData(&programmerSoundContext) );
-    ERRCHECK( eventInstance->setCallback(programmerSoundCallback) );
-    ERRCHECK( eventInstance->setVolume(0.75f) );
+    ERRCHECK( eventInstance->setCallback(programmerSoundCallback, FMOD_STUDIO_EVENT_CALLBACK_CREATE_PROGRAMMER_SOUND | FMOD_STUDIO_EVENT_CALLBACK_DESTROY_PROGRAMMER_SOUND) );
 
     do
     {
@@ -63,39 +77,43 @@ int FMOD_Main()
 
         if (Common_BtnPress(BTN_ACTION1))
         {
-            programmerSoundContext.soundName = Common_MediaPath("640166main_MECO.ogg");
-            ERRCHECK( eventInstance->start() );
+            ERRCHECK( localizedBank->unload() );
+
+            bankIndex = (bankIndex < 2) ? bankIndex + 1 : 0;
+            ERRCHECK( system->loadBankFile(Common_MediaPath(banks[bankIndex]), FMOD_STUDIO_LOAD_BANK_NORMAL, &localizedBank) );
         }
 
         if (Common_BtnPress(BTN_ACTION2))
         {
-            programmerSoundContext.soundName = Common_MediaPath("640169main_Press to ATO.ogg");
-            ERRCHECK( eventInstance->start() );
+            dialogueIndex = (dialogueIndex < 2) ? dialogueIndex + 1 : 0;
+            programmerSoundContext.dialogueString = dialogue[dialogueIndex];
         }
 
-        if (Common_BtnPress(BTN_ACTION3))
+        if (Common_BtnPress(BTN_MORE))
         {
-            programmerSoundContext.soundName = Common_MediaPath("640148main_APU Shutdown.ogg");
-            ERRCHECK( eventInstance->start() );
-        }
-
-        if (Common_BtnPress(BTN_ACTION4))
-        {
-            programmerSoundContext.soundName = Common_MediaPath("640165main_Lookin At It.ogg");
             ERRCHECK( eventInstance->start() );
         }
 
         ERRCHECK( system->update() );
 
         Common_Draw("==================================================");
-        Common_Draw("Event Parameter Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2015-2015.");
+        Common_Draw("Programmer Sound Example.");
+        Common_Draw("Copyright (c) Firelight Technologies 2012-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
-        Common_Draw("Press %s to play event with sound 1", Common_BtnStr(BTN_ACTION1));
-        Common_Draw("Press %s to play event with sound 2", Common_BtnStr(BTN_ACTION2));
-        Common_Draw("Press %s to play event with sound 3", Common_BtnStr(BTN_ACTION3));
-        Common_Draw("Press %s to play event with sound 4", Common_BtnStr(BTN_ACTION4));
+        Common_Draw("Press %s to change language", Common_BtnStr(BTN_ACTION1));
+        Common_Draw("Press %s to change dialogue", Common_BtnStr(BTN_ACTION2));
+        Common_Draw("Press %s to play the event",  Common_BtnStr(BTN_MORE));
+        Common_Draw("");
+        Common_Draw("Language:");
+        Common_Draw("  %s English",  bankIndex == 0 ? ">" : " ");
+        Common_Draw("  %s Japanese", bankIndex == 1 ? ">" : " ");
+        Common_Draw("  %s Chinese",  bankIndex == 2 ? ">" : " ");
+        Common_Draw("");
+        Common_Draw("Dialogue:");
+        Common_Draw("  %s Welcome to the FMOD Studio tutorial", dialogueIndex == 0 ? ">" : " ");
+        Common_Draw("  %s This is the main menu",               dialogueIndex == 1 ? ">" : " ");
+        Common_Draw("  %s Goodbye",                             dialogueIndex == 2 ? ">" : " ");
         Common_Draw("");
         Common_Draw("Press %s to quit", Common_BtnStr(BTN_QUIT));
 
@@ -122,35 +140,34 @@ FMOD_RESULT F_CALLBACK programmerSoundCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE t
 {
     FMOD::Studio::EventInstance* eventInstance = (FMOD::Studio::EventInstance*)event;
 
-    switch (type)
+    if (type == FMOD_STUDIO_EVENT_CALLBACK_CREATE_PROGRAMMER_SOUND)
     {
-    case FMOD_STUDIO_EVENT_CALLBACK_CREATE_PROGRAMMER_SOUND:
-        {
-            FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES* props = (FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*)parameters;
-    
-            // Get our context from the event instance user data
-            ProgrammerSoundContext* context = NULL;
-            CHECK_RESULT( eventInstance->getUserData((void**)&context) );
+        FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES* props = (FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*)parameters;
 
-            // Create the sound
-            FMOD::Sound* sound = NULL;
-            CHECK_RESULT( context->system->createSound(context->soundName, FMOD_CREATECOMPRESSEDSAMPLE | FMOD_NONBLOCKING, NULL, &sound) );
+        // Get our context from the event instance user data
+        ProgrammerSoundContext* context = NULL;
+        CHECK_RESULT( eventInstance->getUserData((void**)&context) );
 
-            // Pass the sound to FMOD
-            props->sound = (FMOD_SOUND*)sound;
-        }
-        break;
-    case FMOD_STUDIO_EVENT_CALLBACK_DESTROY_PROGRAMMER_SOUND:
-        {
-            FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES* props = (FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*)parameters;
+        // Find the audio file in the audio table with the key
+        FMOD_STUDIO_SOUND_INFO info;
+        CHECK_RESULT( context->system->getSoundInfo(context->dialogueString, &info) );
 
-            // Obtain the sound
-            FMOD::Sound* sound = (FMOD::Sound*)props->sound;
+        FMOD::Sound* sound = NULL;
+        CHECK_RESULT( context->lowLevelSystem->createSound(info.name_or_data, FMOD_LOOP_NORMAL | FMOD_CREATECOMPRESSEDSAMPLE | FMOD_NONBLOCKING | info.mode, &info.exinfo, &sound) );
 
-            // Release the sound
-            CHECK_RESULT( sound->release() );
-        }
-        break;
+        // Pass the sound to FMOD
+        props->sound = (FMOD_SOUND*)sound;
+        props->subsoundIndex = info.subsoundindex;
+    }
+    else if (type == FMOD_STUDIO_EVENT_CALLBACK_DESTROY_PROGRAMMER_SOUND)
+    {
+        FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES* props = (FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*)parameters;
+
+        // Obtain the sound
+        FMOD::Sound* sound = (FMOD::Sound*)props->sound;
+
+        // Release the sound
+        CHECK_RESULT( sound->release() );
     }
 
     return FMOD_OK;

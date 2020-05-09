@@ -1,6 +1,6 @@
 /*==============================================================================
 Event Parameter Example
-Copyright (c), Firelight Technologies Pty, Ltd 2012-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2012-2020.
 
 This example demonstrates how to control event playback using game parameters.
 ==============================================================================*/
@@ -15,7 +15,7 @@ int FMOD_Main()
 
     FMOD::Studio::System* system = NULL;
     ERRCHECK( FMOD::Studio::System::create(&system) );
-    ERRCHECK( system->initialize(32, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
+    ERRCHECK( system->initialize(1024, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
 
     FMOD::Studio::Bank* masterBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &masterBank) );
@@ -23,54 +23,55 @@ int FMOD_Main()
     FMOD::Studio::Bank* stringsBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.strings.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &stringsBank) );
 
-    FMOD::Studio::Bank* ambienceBank = NULL;
-    ERRCHECK( system->loadBankFile(Common_MediaPath("Character.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &ambienceBank) );
+    FMOD::Studio::Bank* sfxBank = NULL;
+    ERRCHECK( system->loadBankFile(Common_MediaPath("SFX.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &sfxBank) );
 
     FMOD::Studio::EventDescription* eventDescription = NULL;
-    ERRCHECK( system->getEvent("event:/Character/Footsteps/Footsteps", &eventDescription) );
+    ERRCHECK( system->getEvent("event:/Character/Player Footsteps", &eventDescription) );
 
-    FMOD::Studio::EventInstance* eventInstance = NULL;
-    ERRCHECK( eventDescription->createInstance(&eventInstance) );
-
-    FMOD::Studio::ParameterInstance* surfaceParameter = NULL;
-    ERRCHECK( eventInstance->getParameter("Surface", &surfaceParameter) );
-
-    // Make the event audible to start with
-    ERRCHECK( surfaceParameter->setValue(1.0f) );
+    // Find the parameter once and then set by index
+    // Or we can just find by name every time but by index is more efficient if we are setting lots of parameters
+    FMOD_STUDIO_PARAMETER_DESCRIPTION paramDesc;
+    ERRCHECK( eventDescription->getParameter("Surface", &paramDesc) );
+    int surfaceIndex = paramDesc.index;
 
     float surfaceParameterValue = 0;
-    ERRCHECK( surfaceParameter->getValue(&surfaceParameterValue) );
-    
-    ERRCHECK( eventInstance->start() );
 
     do
     {
         Common_Update();
 
+        if (Common_BtnPress(BTN_MORE))
+        {
+            FMOD::Studio::EventInstance* eventInstance = NULL;
+            ERRCHECK( eventDescription->createInstance(&eventInstance) );
+
+            ERRCHECK( eventInstance->setParameterValueByIndex(surfaceIndex, surfaceParameterValue) );
+            ERRCHECK( eventInstance->start() );
+            ERRCHECK( eventInstance->release() );
+        }
+
         if (Common_BtnPress(BTN_ACTION1))
         {
-            surfaceParameterValue -= 1.0f;
-            ERRCHECK( surfaceParameter->setValue(surfaceParameterValue) );
-            ERRCHECK( surfaceParameter->getValue(&surfaceParameterValue) );
+            surfaceParameterValue = Common_Max(paramDesc.minimum, surfaceParameterValue - 1.0f);
         }
 
         if (Common_BtnPress(BTN_ACTION2))
         {
-            surfaceParameterValue += 1.0f;
-            ERRCHECK( surfaceParameter->setValue(surfaceParameterValue) );
-            ERRCHECK( surfaceParameter->getValue(&surfaceParameterValue) );
+            surfaceParameterValue = Common_Min(surfaceParameterValue + 1.0f, paramDesc.maximum);
         }
 
         ERRCHECK( system->update() );
 
         Common_Draw("==================================================");
         Common_Draw("Event Parameter Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2015-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2012-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Surface Parameter = %1.1f", surfaceParameterValue);
         Common_Draw("");
         Common_Draw("Surface Parameter:");
+        Common_Draw("Press %s to play event", Common_BtnStr(BTN_MORE));
         Common_Draw("Press %s to decrease value", Common_BtnStr(BTN_ACTION1));
         Common_Draw("Press %s to increase value", Common_BtnStr(BTN_ACTION2));
         Common_Draw("");

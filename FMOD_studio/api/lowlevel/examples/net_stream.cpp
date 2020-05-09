@@ -1,6 +1,6 @@
 /*==============================================================================
 Net Stream Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to play streaming audio from an Internet source
 ==============================================================================*/
@@ -18,7 +18,7 @@ int FMOD_Main()
     void            *extradriverdata = 0;
     const int        tagcount = 4;
     int              tagindex = 0;
-    char             tagstring[tagcount][128] = { 0 };
+    char             tagstring[tagcount][128] = { };
     
     Common_Init(&extradriverdata);
     
@@ -43,7 +43,12 @@ int FMOD_Main()
     result = system->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
     ERRCHECK(result);
 
-    result = system->createSound("http://shoutmedia.abc.net.au:10426", FMOD_CREATESTREAM | FMOD_NONBLOCKING, 0, &sound);
+    FMOD_CREATESOUNDEXINFO exinfo;
+    memset(&exinfo, 0, sizeof(FMOD_CREATESOUNDEXINFO));
+    exinfo.cbsize = sizeof(FMOD_CREATESOUNDEXINFO);
+    exinfo.filebuffersize = 1024*16;        /* Increase the default file chunk size to handle seeking inside large playlist files that may be over 2kb. */
+
+    result = system->createSound("http://live-radio01.mediahubaustralia.com/2TJW/mp3/", FMOD_CREATESTREAM | FMOD_NONBLOCKING, &exinfo, &sound);
     ERRCHECK(result);
 
     /*
@@ -79,7 +84,6 @@ int FMOD_Main()
         result = sound->getOpenState(&openstate, &percent, &starving, 0);
         ERRCHECK(result);
         
-        if (channel)
         {
             FMOD_TAG tag;
         
@@ -93,11 +97,25 @@ int FMOD_Main()
                 {
                     sprintf(tagstring[tagindex], "%s = '%s' (%d bytes)", tag.name, (char *)tag.data, tag.datalen);
                     tagindex = (tagindex + 1) % tagcount;
+
+                    if (tag.type == FMOD_TAGTYPE_PLAYLIST && !strcmp(tag.name, "FILE"))
+                    {
+                        char url[256];
+
+                        strncpy(url, (const char *)tag.data, 255);  /* data point to sound owned memory, copy it before the sound is released. */
+
+                        result = sound->release();
+                        ERRCHECK(result);
+
+                        result = system->createSound(url, FMOD_CREATESTREAM | FMOD_NONBLOCKING, &exinfo, &sound);    
+                        ERRCHECK(result);
+                    }
+
                 }
                 else if (tag.type == FMOD_TAGTYPE_FMOD)
                 {
                     /* When a song changes, the sample rate may also change, so compensate here. */
-                    if (!strcmp(tag.name, "Sample Rate Change"))
+                    if (!strcmp(tag.name, "Sample Rate Change") && channel)
                     {
                         float frequency = *((float *)tag.data);
                         
@@ -106,7 +124,10 @@ int FMOD_Main()
                     }
                 }
             }
+        }
             
+        if (channel)
+        {
             result = channel->getPaused(&paused);
             ERRCHECK(result);
             
@@ -145,7 +166,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Net Stream Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Press %s to toggle pause", Common_BtnStr(BTN_ACTION1));

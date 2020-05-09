@@ -1,6 +1,6 @@
 /*==============================================================================
 DSP Effect Per Speaker Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to manipulate a DSP network and as an example, creates 2
 DSP effects, splitting a single sound into 2 audio paths, which it then filters
@@ -245,7 +245,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("DSP Effect Per Speaker Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Press %s to toggle lowpass (left speaker)", Common_BtnStr(BTN_ACTION1));

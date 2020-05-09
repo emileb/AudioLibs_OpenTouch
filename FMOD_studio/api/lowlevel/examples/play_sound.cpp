@@ -1,6 +1,6 @@
 /*==============================================================================
 Play Sound Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to simply load and play multiple sounds, the simplest 
 usage of FMOD. By default FMOD will decode the entire file into memory when it
@@ -119,11 +119,11 @@ int FMOD_Main()
                 }
             }
 
-            system->getChannelsPlaying(&channelsplaying);
+            system->getChannelsPlaying(&channelsplaying, NULL);
 
             Common_Draw("==================================================");
             Common_Draw("Play Sound Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to play a mono sound (drumloop)", Common_BtnStr(BTN_ACTION1));

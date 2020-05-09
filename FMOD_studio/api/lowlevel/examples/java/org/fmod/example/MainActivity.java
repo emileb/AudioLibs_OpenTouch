@@ -1,5 +1,10 @@
+/*==============================================================================
+FMOD Example Framework
+Copyright (c), Firelight Technologies Pty, Ltd 2013-2020.
+==============================================================================*/
 package org.fmod.example;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.graphics.Typeface;
@@ -11,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Button;
+import android.content.pm.PackageManager;
 
 public class MainActivity extends Activity implements OnTouchListener, Runnable
 {
@@ -68,6 +74,17 @@ public class MainActivity extends Activity implements OnTouchListener, Runnable
         llView.addView(llBottomRowButtons);
         
         setContentView(llView);
+
+        // Request necessary permissions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        {
+            String[] perms = { "android.permission.RECORD_AUDIO", "android.permission.WRITE_EXTERNAL_STORAGE" };
+            if (checkSelfPermission(perms[0]) == PackageManager.PERMISSION_DENIED ||
+                checkSelfPermission(perms[1]) == PackageManager.PERMISSION_DENIED)
+            {
+                requestPermissions(perms, 200);
+            }
+        }
 
         org.fmod.FMOD.init(this);
         

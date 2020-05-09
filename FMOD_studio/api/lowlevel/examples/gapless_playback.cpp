@@ -1,6 +1,6 @@
 /*==============================================================================
 Gapless Playback Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to schedule channel playback into the future with sample
 accuracy.  Use several scheduled channels to synchronize 2 or more sounds.
@@ -234,12 +234,12 @@ int FMOD_Main()
                 }
             }
 
-            result = system->getChannelsPlaying(&chansplaying);
+            result = system->getChannelsPlaying(&chansplaying, NULL);
             ERRCHECK(result);
 
             Common_Draw("==================================================");
             Common_Draw("Gapless Playback example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to toggle pause", Common_BtnStr(BTN_ACTION1));

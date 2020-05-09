@@ -1,6 +1,6 @@
 /*==============================================================================
 Convolution Reverb Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to set up a convolution reverb DSP as a global
 DSP unit that can be routed into by multiple seperate channels.
@@ -122,7 +122,7 @@ int FMOD_Main()
     */
     unsigned int irDataLength = sizeof(short) * (irSoundLength * irSoundChannels + 1);
     short* irData = (short*)malloc(irDataLength);
-    irData[0] = irSoundChannels;
+    irData[0] = (short)irSoundChannels;
     unsigned int irDataRead;
     result = irSound->readData(&irData[1], irDataLength - sizeof(short), &irDataRead);
     ERRCHECK(result);
@@ -181,7 +181,7 @@ int FMOD_Main()
 
         if (Common_BtnPress(BTN_LEFT))
         {
-            wetVolume = (wetVolume <= 0.0f) ? wetVolume : wetVolume - 0.05;
+            wetVolume = (wetVolume <= 0.0f) ? wetVolume : wetVolume - 0.05f;
         }
         if (Common_BtnPress(BTN_RIGHT))
         {
@@ -208,7 +208,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Convolution Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("Press %s and %s to change dry mix", Common_BtnStr(BTN_UP), Common_BtnStr(BTN_DOWN));
         Common_Draw("Press %s and %s to change wet mix", Common_BtnStr(BTN_LEFT), Common_BtnStr(BTN_RIGHT));

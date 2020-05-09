@@ -1,6 +1,6 @@
 /*==============================================================================
 Gain DSP Plugin Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to create a simple gain DSP effect.
 ==============================================================================*/
@@ -15,18 +15,17 @@ This example shows how to create a simple gain DSP effect.
 
 #include "fmod.hpp"
 
-#ifdef WIN32
-    #define _CRT_SECURE_NO_WARNINGS
-#endif
+#define FMOD_GAIN_USEPROCESSCALLBACK            /* FMOD plugins have 2 methods of processing data.  
+                                                    1. via a 'read' callback which is compatible with FMOD Ex but limited in functionality, or 
+                                                    2. via a 'process' callback which exposes more functionality, like masks and query before process early out logic. */
 
 extern "C" {
-    F_DECLSPEC F_DLLEXPORT FMOD_DSP_DESCRIPTION* F_STDCALL FMODGetDSPDescription();
+    F_EXPORT FMOD_DSP_DESCRIPTION* F_CALL FMODGetDSPDescription();
 }
 
 const float FMOD_GAIN_PARAM_GAIN_MIN     = -80.0f;
 const float FMOD_GAIN_PARAM_GAIN_MAX     = 10.0f;
 const float FMOD_GAIN_PARAM_GAIN_DEFAULT = 0.0f;
-
 #define FMOD_GAIN_RAMPCOUNT 256
 
 enum
@@ -42,7 +41,11 @@ enum
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspcreate       (FMOD_DSP_STATE *dsp_state);
 FMOD_RESULT F_CALLBACK FMOD_Gain_dsprelease      (FMOD_DSP_STATE *dsp_state);
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspreset        (FMOD_DSP_STATE *dsp_state);
+#ifdef FMOD_GAIN_USEPROCESSCALLBACK
+FMOD_RESULT F_CALLBACK FMOD_Gain_dspprocess      (FMOD_DSP_STATE *dsp_state, unsigned int length, const FMOD_DSP_BUFFER_ARRAY *inbufferarray, FMOD_DSP_BUFFER_ARRAY *outbufferarray, FMOD_BOOL inputsidle, FMOD_DSP_PROCESS_OPERATION op);
+#else
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspread         (FMOD_DSP_STATE *dsp_state, float *inbuffer, float *outbuffer, unsigned int length, int inchannels, int *outchannels);
+#endif
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspsetparamfloat(FMOD_DSP_STATE *dsp_state, int index, float value);
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspsetparamint  (FMOD_DSP_STATE *dsp_state, int index, int value);
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspsetparambool (FMOD_DSP_STATE *dsp_state, int index, FMOD_BOOL value);
@@ -52,10 +55,14 @@ FMOD_RESULT F_CALLBACK FMOD_Gain_dspgetparamint  (FMOD_DSP_STATE *dsp_state, int
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspgetparambool (FMOD_DSP_STATE *dsp_state, int index, FMOD_BOOL *value, char *valuestr);
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspgetparamdata (FMOD_DSP_STATE *dsp_state, int index, void **value, unsigned int *length, char *valuestr);
 FMOD_RESULT F_CALLBACK FMOD_Gain_shouldiprocess  (FMOD_DSP_STATE *dsp_state, FMOD_BOOL inputsidle, unsigned int length, FMOD_CHANNELMASK inmask, int inchannels, FMOD_SPEAKERMODE speakermode);
+FMOD_RESULT F_CALLBACK FMOD_Gain_sys_register    (FMOD_DSP_STATE *dsp_state);
+FMOD_RESULT F_CALLBACK FMOD_Gain_sys_deregister  (FMOD_DSP_STATE *dsp_state);
+FMOD_RESULT F_CALLBACK FMOD_Gain_sys_mix         (FMOD_DSP_STATE *dsp_state, int stage);
 
+static bool                    FMOD_Gain_Running = false;
 static FMOD_DSP_PARAMETER_DESC p_gain;
 static FMOD_DSP_PARAMETER_DESC p_invert;
-
+    
 FMOD_DSP_PARAMETER_DESC *FMOD_Gain_dspparam[FMOD_GAIN_NUM_PARAMETERS] =
 {
     &p_gain,
@@ -72,8 +79,16 @@ FMOD_DSP_DESCRIPTION FMOD_Gain_Desc =
     FMOD_Gain_dspcreate,
     FMOD_Gain_dsprelease,
     FMOD_Gain_dspreset,
+#ifndef FMOD_GAIN_USEPROCESSCALLBACK
     FMOD_Gain_dspread,
+#else
     0,
+#endif
+#ifdef FMOD_GAIN_USEPROCESSCALLBACK
+    FMOD_Gain_dspprocess,
+#else
+    0,
+#endif
     0,
     FMOD_GAIN_NUM_PARAMETERS,
     FMOD_Gain_dspparam,
@@ -86,13 +101,16 @@ FMOD_DSP_DESCRIPTION FMOD_Gain_Desc =
     FMOD_Gain_dspgetparambool,
     0, // FMOD_Gain_dspgetparamdata,
     FMOD_Gain_shouldiprocess,
-    0
+    0,                                      // userdata
+    FMOD_Gain_sys_register,
+    FMOD_Gain_sys_deregister,
+    FMOD_Gain_sys_mix
 };
 
 extern "C"
 {
 
-F_DECLSPEC F_DLLEXPORT FMOD_DSP_DESCRIPTION* F_STDCALL FMODGetDSPDescription()
+F_EXPORT FMOD_DSP_DESCRIPTION* F_CALL FMODGetDSPDescription()
 {
 	static float gain_mapping_values[] = { -80, -50, -30, -10, 10 };
 	static float gain_mapping_scale[] = { 0, 2, 4, 7, 11 };
@@ -109,7 +127,7 @@ class FMODGainState
 public:
     FMODGainState();
 
-    void process(float *inbuffer, float *outbuffer, unsigned int length, int channels);
+    void read(float *inbuffer, float *outbuffer, unsigned int length, int channels);
     void reset();
     void setGain(float);
     void setInvert(bool);
@@ -130,7 +148,7 @@ FMODGainState::FMODGainState()
     reset();
 }
 
-void FMODGainState::process(float *inbuffer, float *outbuffer, unsigned int length, int channels)
+void FMODGainState::read(float *inbuffer, float *outbuffer, unsigned int length, int channels)
 {
     // Note: buffers are interleaved
     float gain = m_current_gain;
@@ -191,7 +209,7 @@ void FMODGainState::setInvert(bool invert)
 
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspcreate(FMOD_DSP_STATE *dsp_state)
 {
-    dsp_state->plugindata = (FMODGainState *)FMOD_DSP_STATE_MEMALLOC(dsp_state, sizeof(FMODGainState), FMOD_MEMORY_NORMAL, "FMODGainState");
+    dsp_state->plugindata = (FMODGainState *)FMOD_DSP_ALLOC(dsp_state, sizeof(FMODGainState));
     if (!dsp_state->plugindata)
     {
         return FMOD_ERR_MEMORY;
@@ -202,16 +220,48 @@ FMOD_RESULT F_CALLBACK FMOD_Gain_dspcreate(FMOD_DSP_STATE *dsp_state)
 FMOD_RESULT F_CALLBACK FMOD_Gain_dsprelease(FMOD_DSP_STATE *dsp_state)
 {
     FMODGainState *state = (FMODGainState *)dsp_state->plugindata;
-    FMOD_DSP_STATE_MEMFREE(dsp_state, state, FMOD_MEMORY_NORMAL, "FMODGainState");
+    FMOD_DSP_FREE(dsp_state, state);
     return FMOD_OK;
 }
+
+#ifdef FMOD_GAIN_USEPROCESSCALLBACK
+
+FMOD_RESULT F_CALLBACK FMOD_Gain_dspprocess(FMOD_DSP_STATE *dsp_state, unsigned int length, const FMOD_DSP_BUFFER_ARRAY *inbufferarray, FMOD_DSP_BUFFER_ARRAY *outbufferarray, FMOD_BOOL inputsidle, FMOD_DSP_PROCESS_OPERATION op)
+{
+    FMODGainState *state = (FMODGainState *)dsp_state->plugindata;
+
+    if (op == FMOD_DSP_PROCESS_QUERY)
+    {
+        if (outbufferarray && inbufferarray)
+        {
+            outbufferarray[0].bufferchannelmask[0] = inbufferarray[0].bufferchannelmask[0];
+            outbufferarray[0].buffernumchannels[0] = inbufferarray[0].buffernumchannels[0];
+            outbufferarray[0].speakermode       = inbufferarray[0].speakermode;
+        }
+
+        if (inputsidle)
+        {
+            return FMOD_ERR_DSP_DONTPROCESS;
+        }
+    }
+    else
+    {
+        state->read(inbufferarray[0].buffers[0], outbufferarray[0].buffers[0], length, inbufferarray[0].buffernumchannels[0]); // input and output channels count match for this effect
+    }
+
+    return FMOD_OK;
+}
+
+#else
 
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspread(FMOD_DSP_STATE *dsp_state, float *inbuffer, float *outbuffer, unsigned int length, int inchannels, int * /*outchannels*/)
 {
     FMODGainState *state = (FMODGainState *)dsp_state->plugindata;
-    state->process(inbuffer, outbuffer, length, inchannels); // input and output channels count match for this effect
+    state->read(inbuffer, outbuffer, length, inchannels); // input and output channels count match for this effect
     return FMOD_OK;
 }
+
+#endif
 
 FMOD_RESULT F_CALLBACK FMOD_Gain_dspreset(FMOD_DSP_STATE *dsp_state)
 {
@@ -285,5 +335,27 @@ FMOD_RESULT F_CALLBACK FMOD_Gain_shouldiprocess(FMOD_DSP_STATE * /*dsp_state*/, 
         return FMOD_ERR_DSP_DONTPROCESS;
     }
 
+    return FMOD_OK;
+}
+
+
+FMOD_RESULT F_CALLBACK FMOD_Gain_sys_register(FMOD_DSP_STATE * /*dsp_state*/)
+{
+    FMOD_Gain_Running = true;
+    // called once for this type of dsp being loaded or registered (it is not per instance)
+    return FMOD_OK;
+}
+
+FMOD_RESULT F_CALLBACK FMOD_Gain_sys_deregister(FMOD_DSP_STATE * /*dsp_state*/)
+{
+    FMOD_Gain_Running = false;
+    // called once for this type of dsp being unloaded or de-registered (it is not per instance)
+    return FMOD_OK;
+}
+
+FMOD_RESULT F_CALLBACK FMOD_Gain_sys_mix(FMOD_DSP_STATE * /*dsp_state*/, int /*stage*/)
+{
+    // stage == 0 , before all dsps are processed/mixed, this callback is called once for this type.
+    // stage == 1 , after all dsps are processed/mixed, this callback is called once for this type.
     return FMOD_OK;
 }

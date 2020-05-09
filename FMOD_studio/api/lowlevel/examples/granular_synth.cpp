@@ -1,9 +1,10 @@
 /*==============================================================================
 Granular Synthesis Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how you can play a string of sounds together without gaps,
-using the setDelay command.
+using the setDelay command, to produce a granular synthesis style truck engine 
+effect.
 
 The basic operation is:
 
@@ -64,7 +65,7 @@ FMOD::Channel *queue_next_sound(int outputrate, FMOD::Channel *playingchannel, i
     
 #ifdef USE_STREAMS  /* Create a new stream */
     FMOD_CREATESOUNDEXINFO info;
-    Common_Memset(&info, 0, sizeof(FMOD_CREATESOUNDEXINFO));
+    memset(&info, 0, sizeof(FMOD_CREATESOUNDEXINFO));
     info.cbsize = sizeof(FMOD_CREATESOUNDEXINFO);
     info.suggestedsoundtype = FMOD_SOUND_TYPE_OGGVORBIS;
     result = gSystem->createStream(soundname[newindex], FMOD_IGNORETAGS | FMOD_LOWMEM, &info, &sound[slot]);
@@ -250,7 +251,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Granular Synthesis SetDelay Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Toggle #define USE_STREAM on/off in code to switch between streams and static samples.");

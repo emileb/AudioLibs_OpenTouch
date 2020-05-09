@@ -1,6 +1,6 @@
 /*==============================================================================
 Simple Event Example
-Copyright (c), Firelight Technologies Pty, Ltd 2012-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2012-2020.
 
 This example demonstrates the various ways of playing an event.
 
@@ -32,7 +32,7 @@ int FMOD_Main()
     ERRCHECK( system->getLowLevelSystem(&lowLevelSystem) );
     ERRCHECK( lowLevelSystem->setSoftwareFormat(0, FMOD_SPEAKERMODE_5POINT1, 0) );
 
-    ERRCHECK( system->initialize(32, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
+    ERRCHECK( system->initialize(1024, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
     
     FMOD::Studio::Bank* masterBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &masterBank) );
@@ -40,14 +40,8 @@ int FMOD_Main()
     FMOD::Studio::Bank* stringsBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.strings.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &stringsBank) );
     
-    FMOD::Studio::Bank* ambienceBank = NULL;
-    ERRCHECK( system->loadBankFile(Common_MediaPath("Surround_Ambience.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &ambienceBank) );
-    
-    FMOD::Studio::Bank* menuBank = NULL;
-    ERRCHECK( system->loadBankFile(Common_MediaPath("UI_Menu.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &menuBank) );
-    
-    FMOD::Studio::Bank* weaponsBank = NULL;
-    ERRCHECK( system->loadBankFile(Common_MediaPath("Weapons.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &weaponsBank) );
+    FMOD::Studio::Bank* sfxBank = NULL;
+    ERRCHECK( system->loadBankFile(Common_MediaPath("SFX.bank"), FMOD_STUDIO_LOAD_BANK_NORMAL, &sfxBank) );
 
     // Get the Looping Ambience event
     FMOD::Studio::EventDescription* loopingAmbienceDescription = NULL;
@@ -65,7 +59,7 @@ int FMOD_Main()
     
     // Get the Single Explosion event
     FMOD::Studio::EventDescription* explosionDescription = NULL;
-    ERRCHECK( system->getEvent("event:/Explosions/Single Explosion", &explosionDescription) );
+    ERRCHECK( system->getEvent("event:/Weapons/Explosion", &explosionDescription) );
 
     // Start loading explosion sample data and keep it in memory
     ERRCHECK( explosionDescription->loadSampleData() );
@@ -106,7 +100,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Simple Event Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2015-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2012-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Press %s to fire and forget the explosion", Common_BtnStr(BTN_ACTION1));
@@ -118,9 +112,7 @@ int FMOD_Main()
         Common_Sleep(50);
     } while (!Common_BtnPress(BTN_QUIT));
     
-    ERRCHECK( weaponsBank->unload() );
-    ERRCHECK( menuBank->unload() );
-    ERRCHECK( ambienceBank->unload() );
+    ERRCHECK( sfxBank->unload() );
     ERRCHECK( stringsBank->unload() );
     ERRCHECK( masterBank->unload() );
 

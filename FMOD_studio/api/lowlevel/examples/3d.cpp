@@ -1,6 +1,6 @@
 /*==============================================================================
 3D Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to basic 3D positioning of sounds.
 ==============================================================================*/
@@ -185,7 +185,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("3D Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Press %s to toggle sound 1 (16bit Mono 3D)", Common_BtnStr(BTN_ACTION1));

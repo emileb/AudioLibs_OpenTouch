@@ -1,6 +1,6 @@
 /*==============================================================================
-Event 3D Example
-Copyright (c), Firelight Technologies Pty, Ltd 2012-2015.
+API Recording Example
+Copyright (c), Firelight Technologies Pty, Ltd 2012-2020.
 
 This example shows recording and playback functionality, allowing the user to
 trigger some sounds and then play back what they have recorded.  The provided
@@ -46,7 +46,7 @@ int FMOD_Main()
     ERRCHECK( system->getLowLevelSystem(&lowLevelSystem) );
     ERRCHECK( lowLevelSystem->setSoftwareFormat(0, FMOD_SPEAKERMODE_5POINT1, 0) );
 
-    ERRCHECK( system->initialize(32, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
+    ERRCHECK( system->initialize(1024, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, extraDriverData) );
 
     State state = State_Selection;
     while (state != State_Quit)
@@ -98,7 +98,7 @@ State executeSelection(FMOD::Studio::System* system)
         
         Common_Draw("==================================================");
         Common_Draw("Recording and playback example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2015-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2012-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Waiting to start recording");
@@ -114,8 +114,6 @@ State executeSelection(FMOD::Studio::System* system)
 // Start recording, load banks and then let the user trigger some sounds
 State executeRecord(FMOD::Studio::System* system)
 {
-    ERRCHECK( system->startRecordCommands(Common_WritePath(RECORD_FILENAME), FMOD_STUDIO_RECORD_COMMANDS_NORMAL) );
-
     FMOD::Studio::Bank* masterBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Master Bank.bank"), FMOD_STUDIO_LOAD_BANK_NONBLOCKING, &masterBank) );
 
@@ -125,38 +123,37 @@ State executeRecord(FMOD::Studio::System* system)
     FMOD::Studio::Bank* vehiclesBank = NULL;
     ERRCHECK( system->loadBankFile(Common_MediaPath("Vehicles.bank"), FMOD_STUDIO_LOAD_BANK_NONBLOCKING, &vehiclesBank) );
 
-    FMOD::Studio::Bank* weaponsBank = NULL;
-    ERRCHECK( system->loadBankFile(Common_MediaPath("Weapons.bank"), FMOD_STUDIO_LOAD_BANK_NONBLOCKING, &weaponsBank) );
+    FMOD::Studio::Bank* sfxBank = NULL;
+    ERRCHECK( system->loadBankFile(Common_MediaPath("SFX.bank"), FMOD_STUDIO_LOAD_BANK_NONBLOCKING, &sfxBank) );
 
     // Wait for banks to load
     ERRCHECK( system->flushCommands() );
 
-    FMOD::Studio::ID explosionID = {0};
-    ERRCHECK( system->lookupID("event:/Explosions/Single Explosion", &explosionID) );
+    // Start recording commands - it will also record which banks we have already loaded by now
+    ERRCHECK( system->startCommandCapture(Common_WritePath(RECORD_FILENAME), FMOD_STUDIO_COMMANDCAPTURE_NORMAL) );
+
+    FMOD_GUID explosionID = {0};
+    ERRCHECK( system->lookupID("event:/Weapons/Explosion", &explosionID) );
 
     FMOD::Studio::EventDescription* engineDescription = NULL;
-    ERRCHECK( system->getEvent("event:/Vehicles/Basic Engine", &engineDescription) );
+    ERRCHECK( system->getEvent("event:/Vehicles/Ride-on Mower", &engineDescription) );
 
     FMOD::Studio::EventInstance* engineInstance = NULL;
     ERRCHECK( engineDescription->createInstance(&engineInstance) );
 
-    FMOD::Studio::ParameterInstance* rpm = NULL;
-    ERRCHECK( engineInstance->getParameter("RPM", &rpm) );
-
-    ERRCHECK( rpm->setValue(650) );
-
+    ERRCHECK( engineInstance->setParameterValue("RPM", 650.0f) );
     ERRCHECK( engineInstance->start() );
 
     // Position the listener at the origin
     FMOD_3D_ATTRIBUTES attributes = { { 0 } };
     attributes.forward.z = 1.0f;
     attributes.up.y = 1.0f;
-    ERRCHECK( system->setListenerAttributes(&attributes) );
+    ERRCHECK( system->setListenerAttributes(0, &attributes) );
 
     // Position the event 2 units in front of the listener
     attributes.position.z = 2.0f;
     ERRCHECK( engineInstance->set3DAttributes(&attributes) );
-    
+
     initializeScreenBuffer();
     
     bool wantQuit = false;
@@ -184,6 +181,10 @@ State executeRecord(FMOD::Studio::System* system)
 
             FMOD::Studio::EventInstance* eventInstance = NULL;
             ERRCHECK( eventDescription->createInstance(&eventInstance) );
+            for (int i=0; i<10; ++i)
+            {
+                ERRCHECK( eventInstance->setVolume(i / 10.0f) );
+            }
 
             ERRCHECK( eventInstance->start() );
 
@@ -230,7 +231,7 @@ State executeRecord(FMOD::Studio::System* system)
         updateScreenPosition(attributes.position);
         Common_Draw("==================================================");
         Common_Draw("Recording and playback example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2015-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2012-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Recording!");
@@ -250,11 +251,11 @@ State executeRecord(FMOD::Studio::System* system)
     ERRCHECK( masterBank->unload() );
     ERRCHECK( stringsBank->unload() );
     ERRCHECK( vehiclesBank->unload() );
-    ERRCHECK( weaponsBank->unload() );
+    ERRCHECK( sfxBank->unload() );
 
     // Finish recording
     ERRCHECK( system->flushCommands() );
-    ERRCHECK( system->stopRecordCommands() );
+    ERRCHECK( system->stopCommandCapture() );
 
     return (wantQuit ? State_Quit : State_Selection);
 }
@@ -262,18 +263,62 @@ State executeRecord(FMOD::Studio::System* system)
 // Play back a previously recorded file
 State executePlayback(FMOD::Studio::System* system)
 {
-    Common_Draw("==================================================");
-    Common_Draw("Recording and playback example.");
-    Common_Draw("Copyright (c) Firelight Technologies 2015-2015.");
-    Common_Draw("==================================================");
-    Common_Draw("");
-    Common_Draw("Playing back recorded commands");
-    Common_Draw("");
-    Common_Sleep(50);
-    Common_Update();
+    FMOD::Studio::CommandReplay* replay;
+    ERRCHECK( system->loadCommandReplay(Common_WritePath(RECORD_FILENAME), FMOD_STUDIO_COMMANDREPLAY_NORMAL, &replay));
+    int commandCount;
+    ERRCHECK(replay->getCommandCount(&commandCount));
+    float totalTime;
+    ERRCHECK(replay->getLength(&totalTime));
+    ERRCHECK(replay->start());
+    ERRCHECK(system->update());
 
-    ERRCHECK( system->playbackCommands(Common_WritePath(RECORD_FILENAME)));
+    for (;;)
+    {
+        Common_Update();
 
+        if (Common_BtnPress(BTN_QUIT))
+        {
+            break;
+        }
+
+        if (Common_BtnPress(BTN_MORE))
+        {
+            bool paused;
+            ERRCHECK(replay->getPaused(&paused));
+            ERRCHECK(replay->setPaused(!paused));
+        }
+
+        FMOD_STUDIO_PLAYBACK_STATE state;
+        ERRCHECK(replay->getPlaybackState(&state));
+        if (state == FMOD_STUDIO_PLAYBACK_STOPPED)
+        {
+            break;
+        }
+
+        int currentIndex;
+        float currentTime;
+        ERRCHECK(replay->getCurrentCommand(&currentIndex, &currentTime));
+
+        ERRCHECK(system->update());
+        
+        Common_Draw("==================================================");
+        Common_Draw("Recording and playback example.");
+        Common_Draw("Copyright (c) Firelight Technologies 2012-2020.");
+        Common_Draw("==================================================");
+        Common_Draw("");
+        Common_Draw("Playing back commands:");
+        Common_Draw("Command = %d / %d\n", currentIndex, commandCount);
+        Common_Draw("Time = %.3f / %.3f\n", currentTime, totalTime);
+        Common_Draw("");
+        Common_Draw("Press %s to pause/unpause recording", Common_BtnStr(BTN_MORE));
+        Common_Draw("Press %s to quit", Common_BtnStr(BTN_QUIT));
+
+        Common_Sleep(50);
+    }
+
+
+    ERRCHECK( replay->release() );
+    ERRCHECK( system->unloadAll() );
     return State_Selection;
 }
 

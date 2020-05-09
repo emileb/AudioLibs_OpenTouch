@@ -1,3 +1,7 @@
+/*==============================================================================
+FMOD Example Framework
+Copyright (c), Firelight Technologies Pty, Ltd 2012-2020.
+==============================================================================*/
 #ifndef FMOD_EXAMPLES_COMMON_H
 #define FMOD_EXAMPLES_COMMON_H
 
@@ -42,6 +46,7 @@ enum Common_Button
 };
 
 /* Cross platform functions (common) */
+void Common_Format(char *buffer, int bufferSize, const char *formatString...);
 void Common_Fatal(const char *format, ...);
 void Common_Draw(const char *format, ...);
 
@@ -60,7 +65,6 @@ void Common_Exit(int returnCode);
 void Common_DrawText(const char *text);
 void Common_LoadFileMemory(const char *name, void **buff, int *length);
 void Common_UnloadFileMemory(void *buff);
-void Common_Format(char *buffer, int bufferSize, const char *formatString...);
 bool Common_BtnPress(Common_Button btn);
 bool Common_BtnDown(Common_Button btn);
 const char *Common_BtnStr(Common_Button btn);

@@ -1,9 +1,11 @@
 /*==============================================================================
 Plugin Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2013.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to created a plugin effect.
 ==============================================================================*/
+
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <math.h>
 #include <stdlib.h>
@@ -13,7 +15,7 @@ This example shows how to created a plugin effect.
 #include "fmod.hpp"
 
 extern "C" {
-    F_DECLSPEC F_DLLEXPORT FMOD_DSP_DESCRIPTION* F_STDCALL FMODGetDSPDescription();
+    F_EXPORT FMOD_DSP_DESCRIPTION* F_CALL FMODGetDSPDescription();
 }
 
 const float FMOD_NOISE_PARAM_GAIN_MIN     = -80.0f;
@@ -61,7 +63,7 @@ FMOD_DSP_PARAMETER_DESC *FMOD_Noise_dspparam[FMOD_NOISE_NUM_PARAMETERS] =
     &p_format
 };
 
-char* FMOD_Noise_Format_Names[3] = {"Mono", "Stereo", "5.1"};
+const char* FMOD_Noise_Format_Names[3] = {"Mono", "Stereo", "5.1"};
 
 FMOD_DSP_DESCRIPTION FMOD_Noise_Desc =
 {
@@ -87,13 +89,16 @@ FMOD_DSP_DESCRIPTION FMOD_Noise_Desc =
     0,
     0,
     0,
-    0
+    0,                                      // userdata
+    0,                                      // Register
+    0,                                      // Deregister
+    0                                       // Mix
 };
 
 extern "C"
 {
 
-F_DECLSPEC F_DLLEXPORT FMOD_DSP_DESCRIPTION* F_STDCALL FMODGetDSPDescription()
+F_EXPORT FMOD_DSP_DESCRIPTION* F_CALL FMODGetDSPDescription()
 {
     FMOD_DSP_INIT_PARAMDESC_FLOAT(p_level, "Level", "dB", "Gain in dB. -80 to 10. Default = 0", FMOD_NOISE_PARAM_GAIN_MIN, FMOD_NOISE_PARAM_GAIN_MAX, FMOD_NOISE_PARAM_GAIN_DEFAULT);
     FMOD_DSP_INIT_PARAMDESC_INT(p_format, "Format", "", "Mono, stereo or 5.1. Default = 0 (mono)", FMOD_NOISE_FORMAT_MONO, FMOD_NOISE_FORMAT_5POINT1, FMOD_NOISE_FORMAT_MONO, false, FMOD_Noise_Format_Names);
@@ -179,7 +184,7 @@ void FMODNoiseState::setLevel(float level)
 
 FMOD_RESULT F_CALLBACK FMOD_Noise_dspcreate(FMOD_DSP_STATE *dsp)
 {
-    dsp->plugindata = (FMODNoiseState *)FMOD_DSP_STATE_MEMALLOC(dsp, sizeof(FMODNoiseState), FMOD_MEMORY_NORMAL, "FMODNoiseState");
+    dsp->plugindata = (FMODNoiseState *)FMOD_DSP_ALLOC(dsp, sizeof(FMODNoiseState));
     if (!dsp->plugindata)
     {
         return FMOD_ERR_MEMORY;
@@ -190,18 +195,18 @@ FMOD_RESULT F_CALLBACK FMOD_Noise_dspcreate(FMOD_DSP_STATE *dsp)
 FMOD_RESULT F_CALLBACK FMOD_Noise_dsprelease(FMOD_DSP_STATE *dsp)
 {
     FMODNoiseState *state = (FMODNoiseState *)dsp->plugindata;
-    FMOD_DSP_STATE_MEMFREE(dsp, state, FMOD_MEMORY_NORMAL, "FMODNoiseState");
+    FMOD_DSP_FREE(dsp, state);
     return FMOD_OK;
 }
 
-FMOD_RESULT F_CALLBACK FMOD_Noise_dspprocess(FMOD_DSP_STATE *dsp, unsigned int length, const FMOD_DSP_BUFFER_ARRAY *inbufferarray, FMOD_DSP_BUFFER_ARRAY *outbufferarray, FMOD_BOOL inputsidle, FMOD_DSP_PROCESS_OPERATION op)
+FMOD_RESULT F_CALLBACK FMOD_Noise_dspprocess(FMOD_DSP_STATE *dsp, unsigned int length, const FMOD_DSP_BUFFER_ARRAY * /*inbufferarray*/, FMOD_DSP_BUFFER_ARRAY *outbufferarray, FMOD_BOOL /*inputsidle*/, FMOD_DSP_PROCESS_OPERATION op)
 {
     FMODNoiseState *state = (FMODNoiseState *)dsp->plugindata;
 
     if (op == FMOD_DSP_PROCESS_QUERY)
     {
-        FMOD_SPEAKERMODE outmode;
-        int outchannels;
+        FMOD_SPEAKERMODE outmode = FMOD_SPEAKERMODE_DEFAULT;
+        int outchannels = 0;
 
         switch(state->format())
         {
@@ -292,7 +297,7 @@ FMOD_RESULT F_CALLBACK FMOD_Noise_dspgetparamint(FMOD_DSP_STATE *dsp, int index,
     {
     case FMOD_NOISE_PARAM_FORMAT:
         *value = state->format();
-        if (valuestr) sprintf(valuestr, FMOD_Noise_Format_Names[state->format()]);
+        if (valuestr) sprintf(valuestr, "%s", FMOD_Noise_Format_Names[state->format()]);
         return FMOD_OK;
     }
 

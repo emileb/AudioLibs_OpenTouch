@@ -1,6 +1,6 @@
 /*==============================================================================
 Plug-in Inspector Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to enumerate loaded plug-ins and their parameters.
 ==============================================================================*/
@@ -35,7 +35,7 @@ void drawTitle()
 {
     Common_Draw("==================================================");
     Common_Draw("Plug-in Inspector Example.");
-    Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+    Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
     Common_Draw("==================================================");
     Common_Draw("");
 }
@@ -65,7 +65,7 @@ void drawDSPInfo(const FMOD_DSP_DESCRIPTION *desc)
     Common_Draw("   %s  |     %s     | %s |     %s     |     %s   ",
         desc->reset ? "Y " : "--",
         hasDataParameter(desc, FMOD_DSP_PARAMETER_DATA_TYPE_SIDECHAIN) ? "Y " : "--",
-        hasDataParameter(desc, FMOD_DSP_PARAMETER_DATA_TYPE_3DATTRIBUTES) ? "Y " : "--",
+        hasDataParameter(desc, FMOD_DSP_PARAMETER_DATA_TYPE_3DATTRIBUTES) || hasDataParameter(desc, FMOD_DSP_PARAMETER_DATA_TYPE_3DATTRIBUTES_MULTI) ? "Y " : "--",
         hasDataParameter(desc, FMOD_DSP_PARAMETER_DATA_TYPE_OVERALLGAIN) ? "Y " : "--",
         hasDataParameter(desc, FMOD_DSP_PARAMETER_DATA_TYPE_USER) || desc->userdata ? "Y " : "--");
 }
@@ -192,17 +192,17 @@ void drawDSPParameters(ParameterViewerState *state)
 
 InspectorState pluginSelectorDo(PluginSelectorState *state)
 {
-    if (Common_BtnDown(BTN_UP))
+    if (Common_BtnPress(BTN_UP))
     {
         state->cursor = (state->cursor - 1 + state->numplugins) % state->numplugins;
     }
 
-    if (Common_BtnDown(BTN_DOWN))
+    if (Common_BtnPress(BTN_DOWN))
     {
         state->cursor = (state->cursor + 1) % state->numplugins;
     }
 
-    if (Common_BtnDown(BTN_RIGHT))
+    if (Common_BtnPress(BTN_RIGHT))
     {
         return PARAMETER_VIEWER;
     }
@@ -215,17 +215,22 @@ InspectorState pluginSelectorDo(PluginSelectorState *state)
 
 InspectorState parameterViewerDo(ParameterViewerState *state)
 {
-    if (Common_BtnDown(BTN_UP))
+    if (state->numparams > MAX_PARAMETERS_IN_VIEW)
     {
-        state->scroll = Common_Max(state->scroll - 1, 0);
+        if (Common_BtnPress(BTN_UP))
+        {
+            state->scroll--;
+            state->scroll = Common_Max(state->scroll, 0);
+        }
+
+        if (Common_BtnPress(BTN_DOWN))
+        {
+            state->scroll++;
+            state->scroll = Common_Min(state->scroll, state->numparams - MAX_PARAMETERS_IN_VIEW);
+        }
     }
 
-    if (Common_BtnDown(BTN_DOWN))
-    {
-        state->scroll = Common_Clamp(0, state->scroll + 1, state->numparams - MAX_PARAMETERS_IN_VIEW / 2);
-    }
-
-    if (Common_BtnDown(BTN_LEFT))
+    if (Common_BtnPress(BTN_LEFT))
     {
         return PLUGIN_SELECTOR;
     }

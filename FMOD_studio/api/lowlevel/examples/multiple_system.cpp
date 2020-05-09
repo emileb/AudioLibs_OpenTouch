@@ -1,6 +1,6 @@
 /*==============================================================================
 Multiple System Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to play sounds on two different output devices from the
 same application. It creates two FMOD::System objects, selects a different sound
@@ -21,6 +21,12 @@ FMOD_RESULT fetchDriver(FMOD::System *system, int *driver)
     result = system->getNumDrivers(&numdrivers);
     ERRCHECK(result);
 
+    if (numdrivers == 0)
+    {
+        result = system->setOutput(FMOD_OUTPUTTYPE_NOSOUND);
+        ERRCHECK(result);
+    }
+
     do
     {
         Common_Update();
@@ -36,7 +42,7 @@ FMOD_RESULT fetchDriver(FMOD::System *system, int *driver)
 
         Common_Draw("==================================================");
         Common_Draw("Multiple System Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Choose a device for system: 0x%p", system);
@@ -149,14 +155,14 @@ int FMOD_Main()
             int channelsplayingA = 0;
             int channelsplayingB = 0;
 
-            result = systemA->getChannelsPlaying(&channelsplayingA);
+            result = systemA->getChannelsPlaying(&channelsplayingA, NULL);
             ERRCHECK(result);
-            result = systemB->getChannelsPlaying(&channelsplayingB);
+            result = systemB->getChannelsPlaying(&channelsplayingB, NULL);
             ERRCHECK(result);
 
             Common_Draw("==================================================");
             Common_Draw("Multiple System Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to play a sound on device A", Common_BtnStr(BTN_ACTION1));

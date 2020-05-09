@@ -1,6 +1,6 @@
 /*==============================================================================
 User Created Sound Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2015.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how create a sound with data filled by the user. It shows a
 user created static sample, followed by a user created stream. The former
@@ -83,7 +83,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("User Created Sound Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Sound played here is generated in realtime. It will either play as a stream which means it is continually filled as it is playing, or it will play as a static sample, which means it is filled once as the sound is created, then when played it will just play that short loop of data.");
@@ -168,7 +168,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("User Created Sound Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2015.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2020.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to toggle pause", Common_BtnStr(BTN_ACTION1));

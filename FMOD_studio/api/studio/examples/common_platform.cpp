@@ -1,3 +1,7 @@
+/*==============================================================================
+FMOD Example Framework
+Copyright (c), Firelight Technologies Pty, Ltd 2013-2020.
+==============================================================================*/
 #include "common.h"
 #include <string.h>
 #include <jni.h>

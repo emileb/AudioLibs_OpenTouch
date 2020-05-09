@@ -1,8 +1,40 @@
 /*===============================================================================================
 Raw Codec Plugin Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2011.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2020.
 
 This example shows how to create a codec that reads raw PCM data.
+
+1. The codec can be compiled as a DLL, using the reserved function name 'FMODGetCodecDescription' 
+   as the only export symbol, and at runtime, the dll can be loaded in with System::loadPlugin.
+
+2. Alternatively a codec of this type can be compiled directly into the program that uses it, and 
+   you just register the codec into FMOD with System::registerCodec.   This puts the codec into 
+   the FMOD system, just the same way System::loadPlugin would if it was an external file.
+
+3. The 'open' callback is the first thing called, and FMOD already has a file handle open for it.
+   In the open callback you can use FMOD_CODEC_STATE::fileread / FMOD_CODEC_STATE::fileseek to parse 
+   your own file format, and return FMOD_ERR_FORMAT if it is not the format you support.  Return 
+   FMOD_OK if it succeeds your format test.
+
+4. When an FMOD user calls System::createSound or System::createStream, the 'open' callback is called
+   once after FMOD tries to open it as many other types of file.   If you want to override FMOD's 
+   internal codecs then use the 'priority' parameter of System::loadPlugin or System::registerCodec.
+
+5. In the open callback, tell FMOD what sort of PCM format the sound will produce with the 
+   FMOD_CODEC_STATE::waveformat member.
+
+6. The 'close' callback is called when Sound::release is called by the FMOD user.
+
+7. The 'read' callback is called when System::createSound or System::createStream wants to receive 
+   PCM data, in the format that you specified with FMOD_CODEC_STATE::waveformat.  Data is 
+   interleaved as decribed in the terminology section of the FMOD API documentation.
+   When a stream is being used, the read callback will be called repeatedly, using a size value 
+   determined by the decode buffer size of the stream.  See FMOD_CREATESOUNDEXINFO or 
+   FMOD_ADVANCEDSETTINGS.
+
+8. The 'seek' callback is called when Channel::setPosition is called, or when looping a sound 
+   when it is a stream.
+
 ===============================================================================================*/
 
 #include <stdio.h>
@@ -32,14 +64,14 @@ FMOD_CODEC_DESCRIPTION rawcodec =
 
 /*
     FMODGetCodecDescription is mandatory for every fmod plugin.  This is the symbol the registerplugin function searches for.
-    Must be declared with F_API to make it export as stdcall.
+    Must be declared with F_CALL to make it export as stdcall.
     MUST BE EXTERN'ED AS C!  C++ functions will be mangled incorrectly and not load in fmod.
 */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-F_DECLSPEC F_DLLEXPORT FMOD_CODEC_DESCRIPTION * F_API FMODGetCodecDescription()
+F_EXPORT FMOD_CODEC_DESCRIPTION * F_CALL FMODGetCodecDescription()
 {
     return &rawcodec;
 }
@@ -69,13 +101,14 @@ FMOD_RESULT F_CALLBACK rawopen(FMOD_CODEC_STATE *codec, FMOD_MODE /*usermode*/, 
     rawwaveformat.channels     = 2;
     rawwaveformat.format       = FMOD_SOUND_FORMAT_PCM16;
     rawwaveformat.frequency    = 44100;
-    rawwaveformat.blockalign   = rawwaveformat.channels * 2;          /* 2 = 16bit pcm */
-    rawwaveformat.lengthpcm    = codec->filesize / rawwaveformat.blockalign;   /* bytes converted to PCM samples */;
+    rawwaveformat.pcmblocksize = 0;
+    rawwaveformat.lengthpcm    = codec->filesize / (rawwaveformat.channels * sizeof(short));   /* bytes converted to PCM samples */;
 
-    codec->numsubsounds = 0;                    /* number of 'subsounds' in this sound.  For most codecs this is 0, only multi sound codecs such as FSB or CDDA have subsounds. */
-    codec->waveformat   = &rawwaveformat;
-    codec->plugindata   = 0;                    /* user data value */
-    
+    codec->numsubsounds      = 0;                    /* number of 'subsounds' in this sound.  For most codecs this is 0, only multi sound codecs such as FSB or CDDA have subsounds. */
+    codec->waveformat        = &rawwaveformat;
+    codec->waveformatversion = FMOD_CODEC_WAVEFORMAT_VERSION;
+    codec->plugindata        = 0;                    /* user data value */
+        
     /* If your file format needs to read data to determine the format and load metadata, do so here with codec->fileread/fileseek function pointers.  This will handle reading from disk/memory or internet. */
     
     return FMOD_OK;
