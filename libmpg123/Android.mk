@@ -4,7 +4,6 @@ include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := $(LOCAL_PATH)
 LOCAL_MODULE     := mpg123
 LOCAL_ARM_MODE   := arm
-LOCAL_LDLIBS     := -llog
 
 LOCAL_SRC_FILES := 	podax_MPG123.c
 LOCAL_SRC_FILES +=  libmpg123.c

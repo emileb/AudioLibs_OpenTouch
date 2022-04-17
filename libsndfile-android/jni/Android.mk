@@ -40,7 +40,6 @@ LOCAL_SRC_FILES := mat5.c windows.c G72x/g723_24.c G72x/g72x.c \
        ircam.c xi.c ima_oki_adpcm.c \
        $(OGG_SRC_FILES) $(VORBIS_SRC_FILES)
 
-#LOCAL_LDLIBS += -llog -ldl
 LOCAL_STATIC_LIBRARIES := flac
 include $(BUILD_STATIC_LIBRARY)
 
