@@ -7,7 +7,6 @@ LOCAL_CFLAGS += -I$(LOCAL_PATH)/../include -ffast-math -fsigned-char
 ifeq ($(TARGET_ARCH),arm)
 	LOCAL_CFLAGS += -march=armv6 -marm -mfloat-abi=softfp -mfpu=vfp
 endif
-LOCAL_SHARED_LIBRARIES := libogg
 
 LOCAL_SRC_FILES := \
 	mdct.c		\
@@ -32,5 +31,10 @@ LOCAL_SRC_FILES := \
 	bitrate.c	\
 	vorbisfile.c	\
 	vorbisenc.c
+
+LOCAL_CFLAGS += -fdata-sections -ffunction-sections  -fPIC
+LOCAL_LDFLAGS += -Wl,--gc-sections -flto
+
+LOCAL_SHARED_LIBRARIES := libogg
 
 include $(BUILD_SHARED_LIBRARY)
