@@ -23,7 +23,7 @@ fluid_defsfont.c	fluid_rev.c
  
 LOCAL_LDLIBS := -llog
 include $(BUILD_STATIC_LIBRARY)
-sdfsdf
+
 #include $(CLEAR_VARS)
 
 #include $(BUILD_SHARED_LIBRARY)
