@@ -1,12 +1,15 @@
 /*==============================================================================
 Play Stream Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to simply play a stream such as an MP3 or WAV. The stream
 behaviour is achieved by specifying FMOD_CREATESTREAM in the call to 
 System::createSound. This makes FMOD decode the file in realtime as it plays,
 instead of loading it all at once which uses far less memory in exchange for a
 small runtime CPU hit.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -112,7 +115,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("Play Stream Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to toggle pause", Common_BtnStr(BTN_ACTION1));

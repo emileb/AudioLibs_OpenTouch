@@ -1,6 +1,6 @@
 /*==============================================================================
 FMOD Example Framework
-Copyright (c), Firelight Technologies Pty, Ltd 2013-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2013-2025.
 ==============================================================================*/
 package org.fmod.example;
 
@@ -22,7 +22,7 @@ public class MainActivity extends Activity implements OnTouchListener, Runnable
 {
     private TextView mTxtScreen;
     private Thread mThread;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {

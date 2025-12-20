@@ -1,17 +1,20 @@
 /*==============================================================================
 User Created Sound Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how create a sound with data filled by the user. It shows a
 user created static sample, followed by a user created stream. The former
 allocates all memory needed for the sound and is played back as a static sample, 
 while the latter streams the data in chunks as it plays, using far less memory.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
 #include <math.h>
 
-FMOD_RESULT F_CALLBACK pcmreadcallback(FMOD_SOUND* /*sound*/, void *data, unsigned int datalen)
+FMOD_RESULT F_CALL pcmreadcallback(FMOD_SOUND* /*sound*/, void *data, unsigned int datalen)
 {
     static float  t1 = 0, t2 = 0;        // time
     static float  v1 = 0, v2 = 0;        // velocity
@@ -31,7 +34,7 @@ FMOD_RESULT F_CALLBACK pcmreadcallback(FMOD_SOUND* /*sound*/, void *data, unsign
     return FMOD_OK;
 }
 
-FMOD_RESULT F_CALLBACK pcmsetposcallback(FMOD_SOUND* /*sound*/, int /*subsound*/, unsigned int /*position*/, FMOD_TIMEUNIT /*postype*/)
+FMOD_RESULT F_CALL pcmsetposcallback(FMOD_SOUND* /*sound*/, int /*subsound*/, unsigned int /*position*/, FMOD_TIMEUNIT /*postype*/)
 {
     /*
         This is useful if the user calls Channel::setPosition and you want to seek your data accordingly.
@@ -74,7 +77,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("User Created Sound Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Sound played here is generated in realtime. It will either play as a stream which means it is continually filled as it is playing, or it will play as a static sample, which means it is filled once as the sound is created, then when played it will just play that short loop of data.");
@@ -159,7 +162,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("User Created Sound Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to toggle pause", Common_BtnStr(BTN_ACTION1));

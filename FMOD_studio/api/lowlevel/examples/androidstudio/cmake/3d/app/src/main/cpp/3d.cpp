@@ -1,8 +1,11 @@
 /*==============================================================================
 3D Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to basic 3D positioning of sounds.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -176,7 +179,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("3D Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Press %s to toggle sound 1 (16bit Mono 3D)", Common_BtnStr(BTN_ACTION1));

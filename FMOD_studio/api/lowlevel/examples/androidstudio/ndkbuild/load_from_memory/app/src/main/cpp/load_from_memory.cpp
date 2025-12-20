@@ -1,10 +1,13 @@
 /*==============================================================================
 Load From Memory Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example is simply a variant of the [Play Sound Example](play_sound.html), 
 but it loads the data into memory then uses the 'load from memory' feature of 
 System::createSound.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -130,7 +133,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("Load From Memory Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to play a mono sound (drumloop)", Common_BtnStr(BTN_ACTION1));

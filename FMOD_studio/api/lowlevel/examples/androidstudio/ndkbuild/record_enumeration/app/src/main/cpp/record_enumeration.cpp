@@ -1,6 +1,6 @@
 /*==============================================================================
 Record enumeration example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to enumerate the available recording drivers on this
 device. It demonstrates how the enumerated list changes as microphones are
@@ -10,6 +10,9 @@ the same time.
 Please note to minimize latency care should be taken to control the number
 of samples between the record position and the play position. Check the record
 example for details on this process.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -23,7 +26,7 @@ struct RECORD_STATE
     FMOD::Channel *channel;
 };
 
-FMOD_RESULT F_CALLBACK SystemCallback(FMOD_SYSTEM* /*system*/, FMOD_SYSTEM_CALLBACK_TYPE /*type*/, void *, void *, void *userData)
+FMOD_RESULT F_CALL SystemCallback(FMOD_SYSTEM* /*system*/, FMOD_SYSTEM_CALLBACK_TYPE /*type*/, void *, void *, void *userData)
 {
     int *recordListChangedCount = (int *)userData;
     *recordListChangedCount = *recordListChangedCount + 1;
@@ -153,7 +156,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Record Enumeration Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Record list has updated %d time(s).", recordListChangedCount);

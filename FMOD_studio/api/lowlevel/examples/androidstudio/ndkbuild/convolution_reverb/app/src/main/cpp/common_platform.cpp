@@ -1,6 +1,6 @@
 /*==============================================================================
 FMOD Example Framework
-Copyright (c), Firelight Technologies Pty, Ltd 2013-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2013-2025.
 ==============================================================================*/
 #include "common.h"
 #include <string.h>
@@ -19,15 +19,17 @@ bool gQuitState;
 std::string gUIString;
 std::vector<char *> gPathList;
 
+static const char ASSET_PREFIX[] = "file:///android_asset/";
+
 int FMOD_Main(); // Defined in example
 
 void Common_Init(void **extraDriverData)
 {
-	gDownButtons = 0;
-	gLastDownButtons = 0;
-	gPressedButtons = 0;
-	gSuspendState = false;
-	gQuitState = false;
+    gDownButtons = 0;
+    gLastDownButtons = 0;
+    gPressedButtons = 0;
+    gSuspendState = false;
+    gQuitState = false;
 }
 
 void Common_Close()
@@ -62,11 +64,6 @@ void Common_Update()
     }
 }
 
-void Common_Sleep(unsigned int ms)
-{
-    usleep(ms * 1000);
-}
-
 void Common_Exit(int returnCode)
 {
     exit(returnCode);
@@ -78,28 +75,6 @@ void Common_DrawText(const char *text)
     snprintf(s, sizeof(s), "%s\n", text);
     
     gUIString.append(s);
-}
-
-void Common_LoadFileMemory(const char *name, void **buff, int *length)
-{
-    FILE *file = fopen(name, "rb");
-    
-    fseek(file, 0, SEEK_END);
-    long len = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    
-    void *mem = malloc(len);
-    fread(mem, 1, len, file);
-    
-    fclose(file);
-
-    *buff = mem;
-    *length = len;
-}
-
-void Common_UnloadFileMemory(void *buff)
-{
-    free(buff);
 }
 
 bool Common_BtnPress(Common_Button btn)
@@ -134,7 +109,7 @@ const char *Common_MediaPath(const char *fileName)
 {
     char *filePath = (char *)calloc(256, sizeof(char));
 
-    strcat(filePath, "file:///android_asset/");
+    strcat(filePath, ASSET_PREFIX);
     strcat(filePath, fileName);
     gPathList.push_back(filePath);
 

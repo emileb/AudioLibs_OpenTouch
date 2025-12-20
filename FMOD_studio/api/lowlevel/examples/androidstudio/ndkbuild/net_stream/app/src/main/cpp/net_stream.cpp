@@ -1,9 +1,13 @@
 /*==============================================================================
 Net Stream Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to play streaming audio from an Internet source
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
+#define COMMON_REQUIRE_NETWORK
 #include "fmod.hpp"
 #include "common.h"
 
@@ -86,12 +90,12 @@ int FMOD_Main()
             {
                 if (tag.datatype == FMOD_TAGDATATYPE_STRING)
                 {
-                    sprintf(tagstring[tagindex], "%s = '%s' (%d bytes)", tag.name, (char *)tag.data, tag.datalen);
+                    snprintf(tagstring[tagindex], 128, "%s = '%s' (%d bytes)", tag.name, (char *)tag.data, tag.datalen);
                     tagindex = (tagindex + 1) % tagcount;
 
                     if (tag.type == FMOD_TAGTYPE_PLAYLIST && !strcmp(tag.name, "FILE"))
                     {
-                        char url[256];
+                        char url[256] = {};
 
                         strncpy(url, (const char *)tag.data, 255);  /* data point to sound owned memory, copy it before the sound is released. */
 
@@ -157,7 +161,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Net Stream Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Press %s to toggle pause", Common_BtnStr(BTN_ACTION1));

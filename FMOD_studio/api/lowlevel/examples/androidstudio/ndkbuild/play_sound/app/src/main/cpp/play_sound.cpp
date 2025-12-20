@@ -1,12 +1,15 @@
 /*==============================================================================
 Play Sound Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to simply load and play multiple sounds, the simplest 
 usage of FMOD. By default FMOD will decode the entire file into memory when it
 loads. If the sounds are big and possibly take up a lot of RAM it would be
 better to use the FMOD_CREATESTREAM flag, this will stream the file in realtime
 as it plays.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -114,7 +117,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("Play Sound Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to play a mono sound (drumloop)", Common_BtnStr(BTN_ACTION1));

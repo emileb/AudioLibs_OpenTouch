@@ -1,6 +1,6 @@
 /*==============================================================================
 Granular Synthesis Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how you can play a string of sounds together without gaps,
 using the setDelay command, to produce a granular synthesis style truck engine 
@@ -32,6 +32,8 @@ amount.
     #define USE_STREAMS = Use 2 stream instances, created while they play.
     #define USE_STREAMS = Use 6 static wavs, all loaded into memory.
 
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -242,7 +244,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Granular Synthesis SetDelay Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Toggle #define USE_STREAM on/off in code to switch between streams and static samples.");

@@ -1,6 +1,6 @@
 /*==============================================================================
 DSP Effect Per Speaker Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to manipulate a DSP network and as an example, creates 2
 DSP effects, splitting a single sound into 2 audio paths, which it then filters
@@ -20,6 +20,9 @@ For more speakers:
  * Filter each effect to each speaker by calling DSPConnection::setMixMatrix.  
    Expand the existing code by extending the matrices from 2 in and 2 out, to the 
    number of speakers you require.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -236,7 +239,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("DSP Effect Per Speaker Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Press %s to toggle lowpass (left speaker)", Common_BtnStr(BTN_ACTION1));

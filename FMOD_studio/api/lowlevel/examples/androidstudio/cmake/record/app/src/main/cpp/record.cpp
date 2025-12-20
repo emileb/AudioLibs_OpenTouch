@@ -1,12 +1,15 @@
 /*==============================================================================
 Record example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to record continuously and play back the same data while
 keeping a specified latency between the two. This is achieved by delaying the
 start of playback until the specified number of milliseconds has been recorded.
 At runtime the playback speed will be slightly altered to compensate for any
 drift in either play or record drivers.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -187,7 +190,7 @@ int FMOD_Main()
 
         Common_Draw("==================================================");
         Common_Draw("Record Example.");
-        Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+        Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
         Common_Draw("==================================================");
         Common_Draw("");
         Common_Draw("Adjust LATENCY define to compensate for stuttering");

@@ -1,8 +1,11 @@
 /*==============================================================================
 Plug-in Inspector Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to enumerate loaded plug-ins and their parameters.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -35,7 +38,7 @@ void drawTitle()
 {
     Common_Draw("==================================================");
     Common_Draw("Plug-in Inspector Example.");
-    Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+    Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
     Common_Draw("==================================================");
     Common_Draw("");
 }

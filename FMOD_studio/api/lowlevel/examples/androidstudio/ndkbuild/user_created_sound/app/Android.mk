@@ -11,6 +11,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE            := fmod
 LOCAL_SRC_FILES         := $(FMOD_API_ROOT)/core/lib/$(TARGET_ARCH_ABI)/libfmod$(FMOD_LIB_SUFFIX).so
 LOCAL_EXPORT_C_INCLUDES := $(FMOD_API_ROOT)/core/inc
+LOCAL_LDFLAGS           := "-Wl,-z,max-page-size=16384"
 
 
 include $(PREBUILT_SHARED_LIBRARY)

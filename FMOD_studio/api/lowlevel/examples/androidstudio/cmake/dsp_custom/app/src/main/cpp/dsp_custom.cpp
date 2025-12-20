@@ -1,10 +1,13 @@
 /*==============================================================================
 Custom DSP Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to add a user created DSP callback to process audio 
 data. The read callback is executed at runtime, and can be added anywhere in
 the DSP network.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -17,7 +20,7 @@ typedef struct
     int   channels;
 } mydsp_data_t;
 
-FMOD_RESULT F_CALLBACK myDSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, float *outbuffer, unsigned int length, int inchannels, int *outchannels) 
+FMOD_RESULT F_CALL myDSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, float *outbuffer, unsigned int length, int inchannels, int *outchannels) 
 {
     mydsp_data_t *data = (mydsp_data_t *)dsp_state->plugindata;
 
@@ -51,7 +54,7 @@ FMOD_RESULT F_CALLBACK myDSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer,
 /*
     Callback called when DSP is created.   This implementation creates a structure which is attached to the dsp state's 'plugindata' member.
 */
-FMOD_RESULT F_CALLBACK myDSPCreateCallback(FMOD_DSP_STATE *dsp_state)
+FMOD_RESULT F_CALL myDSPCreateCallback(FMOD_DSP_STATE *dsp_state)
 {
     unsigned int blocksize;
     FMOD_RESULT result;
@@ -80,7 +83,7 @@ FMOD_RESULT F_CALLBACK myDSPCreateCallback(FMOD_DSP_STATE *dsp_state)
 /*
     Callback called when DSP is destroyed.   The memory allocated in the create callback can be freed here.
 */
-FMOD_RESULT F_CALLBACK myDSPReleaseCallback(FMOD_DSP_STATE *dsp_state)
+FMOD_RESULT F_CALL myDSPReleaseCallback(FMOD_DSP_STATE *dsp_state)
 {
     if (dsp_state->plugindata)
     {
@@ -101,7 +104,7 @@ FMOD_RESULT F_CALLBACK myDSPReleaseCallback(FMOD_DSP_STATE *dsp_state)
     Callback called when DSP::getParameterData is called.   This returns a pointer to the raw floating point PCM data.
     We have set up 'parameter 0' to be the data parameter, so it checks to make sure the passed in index is 0, and nothing else.
 */
-FMOD_RESULT F_CALLBACK myDSPGetParameterDataCallback(FMOD_DSP_STATE *dsp_state, int index, void **data, unsigned int *length, char *)
+FMOD_RESULT F_CALL myDSPGetParameterDataCallback(FMOD_DSP_STATE *dsp_state, int index, void **data, unsigned int *length, char *)
 {
     if (index == 0)
     {
@@ -125,7 +128,7 @@ FMOD_RESULT F_CALLBACK myDSPGetParameterDataCallback(FMOD_DSP_STATE *dsp_state, 
     Callback called when DSP::setParameterFloat is called.   This accepts a floating point 0 to 1 volume value, and stores it.
     We have set up 'parameter 1' to be the volume parameter, so it checks to make sure the passed in index is 1, and nothing else.
 */
-FMOD_RESULT F_CALLBACK myDSPSetParameterFloatCallback(FMOD_DSP_STATE *dsp_state, int index, float value)
+FMOD_RESULT F_CALL myDSPSetParameterFloatCallback(FMOD_DSP_STATE *dsp_state, int index, float value)
 {
     if (index == 1)
     {
@@ -144,7 +147,7 @@ FMOD_RESULT F_CALLBACK myDSPSetParameterFloatCallback(FMOD_DSP_STATE *dsp_state,
     We have set up 'parameter 1' to be the volume parameter, so it checks to make sure the passed in index is 1, and nothing else.
     An alternate way of displaying the data is provided, as a string, so the main app can use it.
 */
-FMOD_RESULT F_CALLBACK myDSPGetParameterFloatCallback(FMOD_DSP_STATE *dsp_state, int index, float *value, char *valstr)
+FMOD_RESULT F_CALL myDSPGetParameterFloatCallback(FMOD_DSP_STATE *dsp_state, int index, float *value, char *valstr)
 {
     if (index == 1)
     {
@@ -153,7 +156,7 @@ FMOD_RESULT F_CALLBACK myDSPGetParameterFloatCallback(FMOD_DSP_STATE *dsp_state,
         *value = mydata->volume_linear;
         if (valstr)
         {
-            sprintf(valstr, "%d", (int)((*value * 100.0f)+0.5f));
+            snprintf(valstr, FMOD_DSP_GETPARAM_VALUESTR_LENGTH, "%d", (int)((*value * 100.0f)+0.5f));
         }
 
         return FMOD_OK;
@@ -296,7 +299,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("Custom DSP Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Press %s to toggle filter bypass", Common_BtnStr(BTN_ACTION1));
@@ -326,7 +329,7 @@ int FMOD_Main()
                     }
                     level = (int)(max * 40.0f);
                     
-                    sprintf(display, "%2d ", channel);
+                    snprintf(display, sizeof(display), "%2d ", channel);
                     for (count = 0; count < level; count++) display[count + 3] = '=';
 
                     Common_Draw(display);

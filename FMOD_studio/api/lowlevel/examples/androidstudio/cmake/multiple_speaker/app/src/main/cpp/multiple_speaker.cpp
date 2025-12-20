@@ -1,10 +1,13 @@
 /*==============================================================================
 Multiple Speaker Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to play sounds in multiple speakers, and also how to even
 assign sound subchannels, such as those in a stereo sound to different
 individual speakers.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -250,7 +253,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("Multiple Speaker Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Speaker mode is set to %s%s", SPEAKERMODE_STRING[speakermode], speakermode < FMOD_SPEAKERMODE_7POINT1 ? " causing some speaker options to be unavailable" : "");

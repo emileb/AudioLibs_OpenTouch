@@ -1,9 +1,12 @@
 /*==============================================================================
 Channel Groups Example
-Copyright (c), Firelight Technologies Pty, Ltd 2004-2022.
+Copyright (c), Firelight Technologies Pty, Ltd 2004-2025.
 
 This example shows how to put channels into channel groups, so that you can
 affect a group of channels at a time instead of just one.
+
+For information on using FMOD example code in your own programs, visit
+https://www.fmod.com/legal
 ==============================================================================*/
 #include "fmod.hpp"
 #include "common.h"
@@ -121,7 +124,7 @@ int FMOD_Main()
 
             Common_Draw("==================================================");
             Common_Draw("Channel Groups Example.");
-            Common_Draw("Copyright (c) Firelight Technologies 2004-2022.");
+            Common_Draw("Copyright (c) Firelight Technologies 2004-2025.");
             Common_Draw("==================================================");
             Common_Draw("");
             Common_Draw("Group A : drumloop.wav, jaguar.wav, swish.wav");

@@ -17,4 +17,4 @@ add_library(
         user_created_sound.cpp
         )
 
-target_link_libraries( example fmod )
+target_link_libraries( example PRIVATE fmod "-Wl,-z,max-page-size=16384" )
