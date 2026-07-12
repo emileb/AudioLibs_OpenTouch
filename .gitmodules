@@ -7,3 +7,6 @@
 [submodule "oboe/src/main/jni/oboe"]
 	path = oboe/src/main/jni/oboe
 	url = https://github.com/google/oboe.git
+[submodule "libxmp/src/main/jni/libxmp"]
+	path = libxmp/src/main/jni/libxmp
+	url = https://github.com/libxmp/libxmp.git
