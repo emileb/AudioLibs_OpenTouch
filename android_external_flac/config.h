@@ -131,7 +131,11 @@
 /* #undef WORDS_BIGENDIAN */
 
 /* Number of bits in a file offset, on hosts where this is settable. */
+/* bionic only exposes the 64-bit fseeko/ftello from API 24, so 32-bit Android
+   below that keeps 32-bit offsets -- which is what this build already linked. */
+#if !(defined(__ANDROID__) && !defined(__LP64__) && __ANDROID_API__ < 24)
 #define _FILE_OFFSET_BITS 64
+#endif
 
 /* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
 /* #undef _LARGEFILE_SOURCE */
